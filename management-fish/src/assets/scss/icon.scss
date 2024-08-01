@@ -1,0 +1,70 @@
+.cp-icon {
+  display: inline-block;
+}
+
+$icon-chevron-down: url("@/assets/images/icons/icon_chevron_down.svg");
+$icon-check: url("@/assets/images/icons/icon_check.svg");
+
+@mixin setIconWidthHeight(
+  $icon-name,
+  $icon-url,
+  $icon-width,
+  $icon-height,
+  $icon-color: null
+) {
+  .#{$icon-name} {
+    width: $icon-width;
+    height: $icon-height;
+    -webkit-mask-image: $icon-url;
+    -moz-mask-image: $icon-url;
+    -ms-mask-image: $icon-url;
+    -o-mask-image: $icon-url;
+    mask-image: $icon-url;
+    -webkit-mask-repeat: no-repeat;
+    -moz-mask-repeat: no-repeat;
+    -ms-mask-repeat: no-repeat;
+    -o-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    background-image: $icon-url;
+    @if $icon-color != null {
+      background-color: $icon-color !important;
+    }
+  }
+}
+
+@mixin setIconWidthHeightPosition(
+  $icon-name,
+  $icon-url,
+  $icon-width,
+  $icon-height,
+  $icon-x-position,
+  $icon-y-position,
+  $icon-color: null
+) {
+  .#{$icon-name} {
+    width: $icon-width;
+    height: $icon-height;
+    -webkit-mask-image: $icon-url;
+    -moz-mask-image: $icon-url;
+    -ms-mask-image: $icon-url;
+    -o-mask-image: $icon-url;
+    mask-image: $icon-url;
+    -webkit-mask-position: $icon-x-position $icon-y-position;
+    -moz-mask-position: $icon-x-position $icon-y-position;
+    -ms-mask-position: $icon-x-position $icon-y-position;
+    -o-mask-position: $icon-x-position $icon-y-position;
+    mask-position: $icon-x-position $icon-y-position;
+    -webkit-mask-repeat: no-repeat;
+    -moz-mask-repeat: no-repeat;
+    -ms-mask-repeat: no-repeat;
+    -o-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+
+    @if $icon-color != null {
+      background-color: $icon-color !important;
+    }
+  }
+}
+
+@include setIconWidthHeight(icon-chevron-down, $icon-chevron-down, 24px, 24px);
+@include setIconWidthHeight(icon-check, $icon-check, 16px, 16px);
