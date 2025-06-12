@@ -15,4 +15,11 @@ export default defineConfig({
   server: {
     port: 3001,
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        additionalData: `@import "./src/assets/scss/_variable.scss";`
+      }
+    }
+  }
 });
