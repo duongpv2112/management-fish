@@ -4,6 +4,7 @@
 - **Cấu trúc dự án cơ bản**: Dự án đã được thiết lập với Vue 3 và Vite, bao gồm các thành phần chính như ManagementFishViews.vue, DataViewer.vue, AddWeight.vue và StatisticData.vue.
 - **Tích hợp API**: Ứng dụng đã có khả năng lấy dữ liệu từ backend thông qua các dịch vụ API như FishTypeAPI, với việc tải dữ liệu bất đồng bộ được triển khai trong các component.
 - **Giao diện cơ bản**: Giao diện người dùng đã được thiết kế với các phần chính để hiển thị dữ liệu, thêm cân nặng và thống kê, sử dụng style scoped với SASS.
+- **Chuyển đổi sang script setup**: Các tệp Vue chính đã được chuyển đổi sang cú pháp script setup của Vue 3, giúp mã nguồn gọn gàng và dễ bảo trì hơn.
 
 ## What's Left to Build
 - **Tính năng nâng cao**: Thêm các tính năng như biểu đồ trực quan hóa dữ liệu, lọc và tìm kiếm dữ liệu cân cá theo các tiêu chí khác nhau.
@@ -13,8 +14,8 @@
 - **Triển khai production**: Đảm bảo ứng dụng được build và triển khai đúng cách lên GitHub Pages hoặc một nền tảng hosting khác.
 
 ## Current Status
-- Dự án đang ở giai đoạn khởi tạo Memory Bank để thiết lập tài liệu cơ bản hỗ trợ phát triển và bảo trì.
-- Các thành phần chính của ứng dụng đã được xác định, nhưng cần thêm công việc để hoàn thiện các tính năng và cải thiện trải nghiệm người dùng.
+- Dự án đã hoàn thành việc chuyển đổi các tệp Vue chính sang cú pháp script setup của Vue 3.
+- Memory Bank đã được cập nhật để phản ánh trạng thái hiện tại của dự án, bao gồm các thay đổi về mã nguồn và kế hoạch phát triển tiếp theo.
 - Đang chờ phản hồi từ người dùng để xác định các ưu tiên phát triển tiếp theo.
 
 ## Known Issues
@@ -27,3 +28,4 @@
 - Quyết định sử dụng axios để tích hợp API được đưa ra để hỗ trợ giao tiếp với backend, thay vì các phương pháp khác như fetch API.
 - Quyết định bản địa hóa giao diện bằng tiếng Việt được thực hiện để phù hợp với người dùng mục tiêu tại nhà Đặng Ánh.
 - Việc khởi tạo Memory Bank được thực hiện để đảm bảo tài liệu dự án được duy trì tốt, hỗ trợ phát triển liên tục và bảo trì lâu dài.
+- Quyết định chuyển đổi sang cú pháp script setup của Vue 3 được thực hiện để cải thiện cấu trúc mã nguồn và tuân thủ các tiêu chuẩn hiện đại.
