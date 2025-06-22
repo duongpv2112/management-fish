@@ -10,123 +10,120 @@
     <template v-else>
       <slot name="customLabel"></slot>
     </template>
-    <div class="cp-input__control" :class="{ 'cp-input--focus': isFocusOn }">
+    <div class="cp-input__control" :class="{ 'cp-input--focus': isFocusOn, 'cp-input--disabled': disabled, 'cp-input--error': errorMessage }">
       <input
         class="input-control"
         :id="idControl"
         :value="modelValue"
         :placeholder="placeholderText"
+        :disabled="disabled"
         @input="handleChangeInput"
         @keydown="handleKeyPress"
         @focus="handleFocusInput"
         @blur="handleBlurInput"
       />
     </div>
+    <div class="cp-input__error" v-if="errorMessage">{{ errorMessage }}</div>
   </div>
 </template>
-<script>
-import { defineComponent, ref } from "vue";
+<script setup>
+import { ref } from "vue";
 
-export default defineComponent({
-  name: "CPInput",
-  props: {
-    idControl: {
-      type: String,
-      default: "",
-    },
-    labelControl: {
-      type: String,
-      default: "",
-    },
-    isCustomLabel: {
-      type: Boolean,
-      default: false,
-    },
-    modelValue: {
-      type: [String, Number],
-      default: "",
-    },
-    width: {
-      type: [String, Number],
-      default: "",
-    },
-    height: {
-      type: [String, Number],
-      default: "",
-    },
-    placeholderText: {
-      type: String,
-      default: "",
-    },
-    typeInput: {
-      type: Number,
-      default: "2",
-    },
+const props = defineProps({
+  idControl: {
+    type: String,
+    default: "",
   },
-  setup(props, { emit }) {
-    const isFocusOn = ref(false);
+  labelControl: {
+    type: String,
+    default: "",
+  },
+  isCustomLabel: {
+    type: Boolean,
+    default: false,
+  },
+  modelValue: {
+    type: [String, Number],
+    default: "",
+  },
+  width: {
+    type: [String, Number],
+    default: "",
+  },
+  height: {
+    type: [String, Number],
+    default: "",
+  },
+  placeholderText: {
+    type: String,
+    default: "",
+  },
+  typeInput: {
+    type: Number,
+    default: 2,
+  },
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
+  errorMessage: {
+    type: String,
+    default: "",
+  }
+});
 
-    const handleFocusInput = () => {
-      isFocusOn.value = true;
-    };
+const emit = defineEmits(['update', 'enter']);
+const isFocusOn = ref(false);
 
-    const handleBlurInput = () => {
-      isFocusOn.value = false;
-    };
+const handleFocusInput = () => {
+  isFocusOn.value = true;
+};
 
-    const handleChangeInput = ($event) => {
-      emit("update", $event.target.value);
-    };
+const handleBlurInput = () => {
+  isFocusOn.value = false;
+};
 
-    const handleKeyPress = ($event) => {
-      switch (props.typeInput) {
-        case typeInputEnum.value.NumberType:
-          // Chỉ cho phép các phím số (0-9), phím Backspace, phím Delete, phím Tab và phím mũi tên
-          const allowedKeys = [
-            "Backspace",
-            "Delete",
-            "Tab",
-            "ArrowLeft",
-            "ArrowRight",
-            "ArrowUp",
-            "ArrowDown",
-          ];
+const handleChangeInput = ($event) => {
+  emit("update", $event.target.value);
+};
 
-          // Kiểm tra nếu phím nhấn không phải là số hoặc không nằm trong danh sách các phím cho phép
-          if (
-            !allowedKeys.includes($event.key) && // Nếu không phải là một phím được cho phép
-            ($event.key < "0" || $event.key > "9") && // Nếu không phải là phím số
-            !(
-              $event.ctrlKey &&
-              ($event.key === "a" || $event.key === "c" || $event.key === "x")
-            )
-          ) {
-            $event.preventDefault(); // Ngăn chặn hành động mặc định (nhập ký tự vào input)
-          }
-          break;
-        default:
-          break;
+const handleKeyPress = ($event) => {
+  if ($event.key === 'Enter') {
+    emit('enter');
+  }
+  switch (props.typeInput) {
+    case typeInputEnum.value.NumberType:
+      // Chỉ cho phép các phím số (0-9), phím Backspace, phím Delete, phím Tab và phím mũi tên
+      const allowedKeys = [
+        "Backspace",
+        "Delete",
+        "Tab",
+        "ArrowLeft",
+        "ArrowRight",
+        "ArrowUp",
+        "ArrowDown",
+      ];
+
+      // Kiểm tra nếu phím nhấn không phải là số hoặc không nằm trong danh sách các phím cho phép
+      if (
+        !allowedKeys.includes($event.key) && // Nếu không phải là một phím được cho phép
+        ($event.key < "0" || $event.key > "9") && // Nếu không phải là phím số
+        !(
+          $event.ctrlKey &&
+          ($event.key === "a" || $event.key === "c" || $event.key === "x")
+        )
+      ) {
+        $event.preventDefault(); // Ngăn chặn hành động mặc định (nhập ký tự vào input)
       }
-    };
+      break;
+    default:
+      break;
+  }
+};
 
-    const typeInputEnum = ref({
-      NumberType: 1,
-      TextType: 2,
-    });
-
-    return {
-      // Computed
-
-      // Property
-      isFocusOn,
-
-      // Function
-      handleChangeInput,
-      handleFocusInput,
-      handleBlurInput,
-      handleKeyPress,
-    };
-  },
+const typeInputEnum = ref({
+  NumberType: 1,
+  TextType: 2,
 });
 </script>
 <style lang="scss" scoped>
@@ -152,7 +149,16 @@ export default defineComponent({
       border-color: #0065ff !important;
     }
 
-    &:hover {
+    &.cp-input--disabled {
+      background-color: #f0f2f4;
+      cursor: not-allowed;
+    }
+
+    &.cp-input--error {
+      border-color: #dc3545;
+    }
+
+    &:hover:not(.cp-input--disabled) {
       border-color: #6b778c;
     }
 
@@ -161,11 +167,24 @@ export default defineComponent({
       border: none;
       outline: none;
       padding: 8px 16px;
+      background: transparent;
 
       &::placeholder {
         opacity: 0.7;
       }
+
+      &:disabled {
+        cursor: not-allowed;
+        color: #6c757d;
+      }
     }
+  }
+
+  .cp-input__error {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 4px;
+    font-weight: 400;
   }
 }
 </style>
