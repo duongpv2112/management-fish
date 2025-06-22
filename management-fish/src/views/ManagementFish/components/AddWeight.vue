@@ -166,19 +166,29 @@ const saveFishWeight = async () => {
     basketType: basketTypeValue.value,
   };
 
+  // Đặt lại form trước khi lưu
+  fishTypeValue.value = null;
+  basketTypeValue.value = null;
+  fishWeightValue.value = null;
+  
+  // Phát sự kiện để thông báo cho component cha bắt đầu loading danh sách cân
+  emit('weightAdded');
+  
   isLoading.value = true;
   try {
     let result = await FishWeightAPI.saveFishWeight(dataSaveFishWeight);
     successMessage.value = "Lưu số cân thành công!";
-    // Đặt lại form sau khi lưu thành công
+    // Đảm bảo form được đặt lại sau khi lưu thành công
     fishTypeValue.value = null;
     basketTypeValue.value = null;
     fishWeightValue.value = null;
-    // Phát sự kiện để thông báo cho component cha cập nhật dữ liệu
-    emit('weightAdded');
   } catch (error) {
     errorMessage.value = "Lưu số cân thất bại, vui lòng thử lại sau.";
     console.error("Lỗi khi lưu số cân cá:", error);
+    // Đặt lại form ngay cả khi có lỗi để đảm bảo dữ liệu không còn trên giao diện
+    fishTypeValue.value = null;
+    basketTypeValue.value = null;
+    fishWeightValue.value = null;
   } finally {
     isLoading.value = false;
   }
@@ -249,7 +259,7 @@ onMounted(async () => {
     background-color: $color-primary;
     color: $color-card-background;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
     transition: background-color 0.3s ease;
 

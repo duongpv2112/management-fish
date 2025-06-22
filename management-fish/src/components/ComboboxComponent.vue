@@ -1,5 +1,5 @@
 <template>
-  <div class="cp-combobox">
+  <div class="cp-combobox" v-click-outside="handleCloseLstData">
     <label
       class="cp-combobox__label"
       :for="idControl"
@@ -12,7 +12,7 @@
     </template>
     <div
       class="cp-combobox__control"
-      :class="{ rounded: rounded, 'cp-combobox--focus': isFocusOn }"
+      :class="{ rounded: rounded, 'cp-combobox--focus': isFocusOn, 'cp-combobox--disabled': disabled, 'cp-combobox--error': errorMessage }"
     >
       <div class="cp-combobox__input">
         <input
@@ -20,6 +20,8 @@
           class="combobox-input"
           :value="valueInput"
           :placeholder="placeholderText"
+          :disabled="disabled"
+          autocomplete="off"
           type="text"
           @input="handleChangeInput"
           @keydown="handleKeyPress"
@@ -59,311 +61,300 @@
         </div>
       </Transition>
     </div>
+    <div class="cp-combobox__error" v-if="errorMessage">{{ errorMessage }}</div>
   </div>
 </template>
-<script>
-import { computed, defineComponent, onMounted, ref } from "vue";
+<script setup>
+import { ref, onMounted } from "vue";
 
-export default defineComponent({
-  name: "CPCombobox",
-  props: {
-    idControl: {
-      type: String,
-      default: "",
-    },
-    labelControl: {
-      type: String,
-      default: "",
-    },
-    isCustomLabel: {
-      type: Boolean,
-      default: false,
-    },
-    lstData: {
-      type: Array,
-      default: [],
-    },
-    modelValue: {
-      type: [String, Number],
-      default: "",
-    },
-    dataField: {
-      type: String,
-      default: "",
-    },
-    dataFieldText: {
-      type: String,
-      default: "",
-    },
-    placeholderText: {
-      type: String,
-      default: "",
-    },
-    width: {
-      type: [String, Number],
-      default: "",
-    },
-    height: {
-      type: [String, Number],
-      default: "",
-    },
-    rounded: {
-      type: Boolean,
-      default: true,
-    },
-    isCustomCombobox: {
-      type: Boolean,
-      default: false,
-    },
-    isCustomFilter: {
-      type: Boolean,
-      default: false,
-    },
+const props = defineProps({
+  idControl: {
+    type: String,
+    default: "",
   },
+  labelControl: {
+    type: String,
+    default: "",
+  },
+  isCustomLabel: {
+    type: Boolean,
+    default: false,
+  },
+  lstData: {
+    type: Array,
+    default: [],
+  },
+  modelValue: {
+    type: [String, Number],
+    default: "",
+  },
+  dataField: {
+    type: String,
+    default: "",
+  },
+  dataFieldText: {
+    type: String,
+    default: "",
+  },
+  placeholderText: {
+    type: String,
+    default: "",
+  },
+  width: {
+    type: [String, Number],
+    default: "",
+  },
+  height: {
+    type: [String, Number],
+    default: "",
+  },
+  rounded: {
+    type: Boolean,
+    default: true,
+  },
+  isCustomCombobox: {
+    type: Boolean,
+    default: false,
+  },
+  isCustomFilter: {
+    type: Boolean,
+    default: false,
+  },
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
+  errorMessage: {
+    type: String,
+    default: "",
+  }
+});
 
-  setup(props, { emit }) {
-    const timeoutChangeInput = ref(null);
-    const isShowLstData = ref(false);
-    const itemFocusCurrent = ref({});
-    const itemSelectedCurrent = ref({});
-    const indexFocusCurrent = ref(null);
-    const lstDataCombobox = ref(null);
-    const valueInput = ref(null);
-    const isFocusOn = ref(false);
+const emit = defineEmits(['update']);
+const timeoutChangeInput = ref(null);
+const isShowLstData = ref(false);
+const itemFocusCurrent = ref({});
+const itemSelectedCurrent = ref({});
+const indexFocusCurrent = ref(null);
+const lstDataCombobox = ref(null);
+const valueInput = ref(null);
+const isFocusOn = ref(false);
 
-    onMounted(() => {
-      lstDataCombobox.value = remapLstData();
-      initTextCombobox();
+onMounted(() => {
+  lstDataCombobox.value = remapLstData();
+  initTextCombobox();
+});
+
+const initTextCombobox = () => {
+  let itemInit = props.lstData.find(
+    (item) => item[props.dataField] == props.modelValue
+  );
+  valueInput.value = itemInit?.[props.dataFieldText] ?? "";
+};
+
+const handleClick = () => {
+  if (!props.disabled) {
+    isShowLstData.value = !isShowLstData.value;
+  }
+};
+
+const handleFocusInput = () => {
+  isFocusOn.value = true;
+};
+
+const handleBlurInput = () => {
+  isFocusOn.value = false;
+};
+
+const handleShowLstData = () => {
+  if (!props.disabled) {
+    isShowLstData.value = true;
+  }
+};
+
+const handleCloseLstData = () => {
+  isShowLstData.value = false;
+  lstDataCombobox.value = remapLstData();
+};
+
+const handleChangeInput = ($event) => {
+  valueInput.value = $event.target.value;
+  clearTimeout(timeoutChangeInput.value);
+  timeoutChangeInput.value = setTimeout(() => {
+    handleShowLstData();
+    lstDataCombobox.value = filterValue($event.target.value);
+  }, 500);
+};
+
+const filterValue = (value) => {
+  if (!props.isCustomFilter) {
+    indexFocusCurrent.value = null;
+
+    let lstDataFilter = props.lstData.filter((item) => {
+      let itemText = removeVietnameseTones(item[props.dataFieldText])
+        .toLowerCase()
+        .trim();
+      let valueText = removeVietnameseTones(value).toLowerCase().trim();
+      return itemText.includes(valueText);
     });
 
-    const initTextCombobox = () => {
-      let itemInit = props.lstData.find(
-        (item) => item[props.dataField] == props.modelValue
-      );
-      valueInput.value = itemInit?.[props.dataFieldText] ?? "";
-    };
+    return lstDataFilter;
+  }
+};
 
-    const handleClick = () => {
-      isShowLstData.value = !isShowLstData.value;
-    };
+const handleKeyPress = ($event) => {
+  if (props.disabled) return;
+  
+  let keyCode = $event.keyCode;
+  switch (keyCode) {
+    case keyPressCode.value.ArrowDown:
+      handleShowLstData();
+      if (indexFocusCurrent.value == null) {
+        indexFocusCurrent.value = 0;
+      } else {
+        if (indexFocusCurrent.value >= lstDataCombobox.value.length - 1) {
+          indexFocusCurrent.value = lstDataCombobox.value.length - 1;
+        } else indexFocusCurrent.value++;
+      }
 
-    const handleFocusInput = () => {
-      isFocusOn.value = true;
-    };
+      itemFocusCurrent.value =
+        lstDataCombobox.value[indexFocusCurrent.value];
+      lstDataCombobox.value = remapFocusLstData();
+      break;
+    case keyPressCode.value.ArrowUp:
+      handleShowLstData();
+      if (indexFocusCurrent.value == null || indexFocusCurrent.value == 0) {
+        indexFocusCurrent.value = 0;
+      } else {
+        indexFocusCurrent.value--;
+      }
 
-    const handleBlurInput = () => {
-      isFocusOn.value = false;
+      itemFocusCurrent.value =
+        lstDataCombobox.value[indexFocusCurrent.value];
+      lstDataCombobox.value = remapFocusLstData();
+      break;
+    case keyPressCode.value.Enter:
+      itemFocusCurrent.value =
+        lstDataCombobox.value[indexFocusCurrent.value];
+      handleSelectedItem(null, $event);
+      break;
+    case keyPressCode.value.ESC:
       handleCloseLstData();
-    };
+      break;
+    default:
+      break;
+  }
+};
 
-    const handleShowLstData = () => {
-      isShowLstData.value = true;
-    };
+const handleSelectedItem = (item, $event) => {
+  $event?.stopPropagation();
+  let itemSelected = item ?? itemFocusCurrent.value;
+  if (!itemSelected) {
+    handleCloseLstData();
+    return;
+  }
+  valueInput.value = itemSelected[props.dataFieldText];
+  itemSelectedCurrent.value = itemSelected;
+  lstDataCombobox.value = remapSelectedLstData();
+  handleCloseLstData();
 
-    const handleCloseLstData = () => {
-      isShowLstData.value = false;
-      lstDataCombobox.value = remapLstData();
-    };
+  emit("update", itemSelected[props.dataField]);
+};
 
-    const handleChangeInput = ($event) => {
-      valueInput.value = $event.target.value;
-      clearTimeout(timeoutChangeInput.value);
-      timeoutChangeInput.value = setTimeout(() => {
-        handleShowLstData();
-        lstDataCombobox.value = filterValue($event.target.value);
-      }, 500);
-    };
+const remapLstData = () => {
+  let newLstData = deepClone(props.lstData);
+  newLstData = newLstData.map((item) => {
+    item.IsSelected = false;
+    item.IsFocus = false;
+    if (
+      item[props.dataField] == itemSelectedCurrent.value[props.dataField]
+    ) {
+      item.IsSelected = true;
+    } else if (
+      item[props.dataField] == props.modelValue &&
+      !itemSelectedCurrent.value[props.dataField]
+    ) {
+      item.IsSelected = true;
+    }
 
-    const filterValue = (value) => {
-      if (!props.isCustomFilter) {
-        indexFocusCurrent.value = null;
+    return item;
+  });
 
-        let lstDataFilter = props.lstData.filter((item) => {
-          let itemText = removeVietnameseTones(item[props.dataFieldText])
-            .toLowerCase()
-            .trim();
-          let valueText = removeVietnameseTones(value).toLowerCase().trim();
-          return itemText.includes(valueText);
-        });
+  return newLstData;
+};
 
-        return lstDataFilter;
-      }
-    };
+const remapFocusLstData = () => {
+  let newLstData = deepClone(lstDataCombobox.value);
+  let result = newLstData.map((item) => {
+    let newItem = { ...item };
+    if (
+      newItem[props.dataField] == itemFocusCurrent.value[props.dataField]
+    ) {
+      newItem.IsFocus = true;
+    } else newItem.IsFocus = false;
 
-    const handleKeyPress = ($event) => {
-      let keyCode = $event.keyCode;
-      switch (keyCode) {
-        case keyPressCode.value.ArrowDown:
-          handleShowLstData();
-          if (indexFocusCurrent.value == null) {
-            indexFocusCurrent.value = 0;
-          } else {
-            if (indexFocusCurrent.value >= lstDataCombobox.value.length - 1) {
-              indexFocusCurrent.value = lstDataCombobox.value.length - 1;
-            } else indexFocusCurrent.value++;
-          }
+    return newItem;
+  });
 
-          itemFocusCurrent.value =
-            lstDataCombobox.value[indexFocusCurrent.value];
-          lstDataCombobox.value = remapFocusLstData();
-          break;
-        case keyPressCode.value.ArrowUp:
-          handleShowLstData();
-          if (indexFocusCurrent.value == null || indexFocusCurrent.value == 0) {
-            indexFocusCurrent.value = 0;
-          } else {
-            indexFocusCurrent.value--;
-          }
+  return result;
+};
 
-          itemFocusCurrent.value =
-            lstDataCombobox.value[indexFocusCurrent.value];
-          lstDataCombobox.value = remapFocusLstData();
-          break;
-        case keyPressCode.value.Enter:
-          itemFocusCurrent.value =
-            lstDataCombobox.value[indexFocusCurrent.value];
-          handleSelectedItem(null, $event);
-          break;
-        case keyPressCode.value.ESC:
-          handleCloseLstData();
-          break;
-        default:
-          break;
-      }
-    };
+const remapSelectedLstData = () => {
+  let newLstData = deepClone(lstDataCombobox.value);
+  let result = newLstData.map((item) => {
+    let newItem = { ...item };
+    newItem.IsSelected = false;
+    if (
+      newItem[props.dataField] == itemSelectedCurrent.value[props.dataField]
+    ) {
+      newItem.IsSelected = true;
+    }
 
-    const handleSelectedItem = (item, $event) => {
-      $event?.stopPropagation();
-      let itemSelected = item ?? itemFocusCurrent.value;
-      if (!itemSelected) {
-        handleCloseLstData();
-        return;
-      }
-      valueInput.value = itemSelected[props.dataFieldText];
-      itemSelectedCurrent.value = itemSelected;
-      lstDataCombobox.value = remapSelectedLstData();
-      handleCloseLstData();
+    return newItem;
+  });
 
-      emit("update", itemSelected[props.dataField]);
-    };
+  return result;
+};
 
-    const remapLstData = () => {
-      let newLstData = deepClone(props.lstData);
-      newLstData = newLstData.map((item) => {
-        item.IsSelected = false;
-        item.IsFocus = false;
-        if (
-          item[props.dataField] == itemSelectedCurrent.value[props.dataField]
-        ) {
-          item.IsSelected = true;
-        } else if (
-          item[props.dataField] == props.modelValue &&
-          !itemSelectedCurrent.value[props.dataField]
-        ) {
-          item.IsSelected = true;
-        }
+const removeVietnameseTones = (str) => {
+  str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
+  str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
+  str = str.replace(/ì|í|ị|ỉ|ĩ/g, "i");
+  str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, "o");
+  str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, "u");
+  str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, "y");
+  str = str.replace(/đ/g, "d");
+  str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, "A");
+  str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, "E");
+  str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, "I");
+  str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, "O");
+  str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "U");
+  str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, "Y");
+  str = str.replace(/Đ/g, "D");
+  str = str.replace(/\u0300|\u0301|\u0303|\u0309|\u0323/g, "");
+  str = str.replace(/\u02C6|\u0306|\u031B/g, "");
+  str = str.replace(/ + /g, " ");
+  str = str.trim();
+  str = str.replace(
+    /!|@|%|\^|\*|\(|\)|\+|\=|\<|\>|\?|\/|,|\.|\:|\;|\'|\"|\&|\#|\[|\]|~|\$|_|`|-|{|}|\||\\/g,
+    " "
+  );
+  return str;
+};
 
-        return item;
-      });
+const deepClone = (dataClone) => {
+  if (!dataClone) {
+    return dataClone;
+  }
 
-      return newLstData;
-    };
+  return JSON.parse(JSON.stringify(dataClone));
+};
 
-    const remapFocusLstData = () => {
-      let newLstData = deepClone(lstDataCombobox.value);
-      let result = newLstData.map((item) => {
-        let newItem = { ...item };
-        if (
-          newItem[props.dataField] == itemFocusCurrent.value[props.dataField]
-        ) {
-          newItem.IsFocus = true;
-        } else newItem.IsFocus = false;
-
-        return newItem;
-      });
-
-      return result;
-    };
-
-    const remapSelectedLstData = () => {
-      let newLstData = deepClone(lstDataCombobox.value);
-      let result = newLstData.map((item) => {
-        let newItem = { ...item };
-        newItem.IsSelected = false;
-        if (
-          newItem[props.dataField] == itemSelectedCurrent.value[props.dataField]
-        ) {
-          newItem.IsSelected = true;
-        }
-
-        return newItem;
-      });
-
-      return result;
-    };
-
-    const removeVietnameseTones = (str) => {
-      str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
-      str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
-      str = str.replace(/ì|í|ị|ỉ|ĩ/g, "i");
-      str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, "o");
-      str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, "u");
-      str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, "y");
-      str = str.replace(/đ/g, "d");
-      str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, "A");
-      str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, "E");
-      str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, "I");
-      str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, "O");
-      str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "U");
-      str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, "Y");
-      str = str.replace(/Đ/g, "D");
-      str = str.replace(/\u0300|\u0301|\u0303|\u0309|\u0323/g, "");
-      str = str.replace(/\u02C6|\u0306|\u031B/g, "");
-      str = str.replace(/ + /g, " ");
-      str = str.trim();
-      str = str.replace(
-        /!|@|%|\^|\*|\(|\)|\+|\=|\<|\>|\?|\/|,|\.|\:|\;|\'|\"|\&|\#|\[|\]|~|\$|_|`|-|{|}|\||\\/g,
-        " "
-      );
-      return str;
-    };
-
-    const deepClone = (dataClone) => {
-      if (!dataClone) {
-        return dataClone;
-      }
-
-      return JSON.parse(JSON.stringify(dataClone));
-    };
-
-    const keyPressCode = ref({
-      Enter: 13,
-      ArrowUp: 38,
-      ArrowDown: 40,
-      ESC: 27,
-    });
-
-    return {
-      // Computed
-
-      // Property
-      valueInput,
-      isShowLstData,
-      itemFocusCurrent,
-      itemSelectedCurrent,
-      lstDataCombobox,
-      isFocusOn,
-
-      // Function
-      initTextCombobox,
-      handleChangeInput,
-      handleClick,
-      handleFocusInput,
-      handleBlurInput,
-      handleKeyPress,
-      handleSelectedItem,
-    };
-  },
+const keyPressCode = ref({
+  Enter: 13,
+  ArrowUp: 38,
+  ArrowDown: 40,
+  ESC: 27,
 });
 </script>
 <style lang="scss" scoped>
@@ -389,7 +380,16 @@ export default defineComponent({
       border-color: #0065ff !important;
     }
 
-    &:hover {
+    &.cp-combobox--disabled {
+      background-color: #f0f2f4;
+      cursor: not-allowed;
+    }
+
+    &.cp-combobox--error {
+      border-color: #dc3545;
+    }
+
+    &:hover:not(.cp-combobox--disabled) {
       border-color: #6b778c;
     }
 
@@ -403,9 +403,15 @@ export default defineComponent({
         border: none;
         outline: none;
         padding: 8px 16px;
+        background: transparent;
 
         &::placeholder {
           opacity: 0.7;
+        }
+
+        &:disabled {
+          cursor: not-allowed;
+          color: #6c757d;
         }
       }
 
@@ -419,7 +425,7 @@ export default defineComponent({
         border-top-right-radius: 5px;
         border-bottom-right-radius: 5px;
 
-        &:hover {
+        &:hover:not(:disabled) {
           background-color: #f0f2f4;
         }
       }
@@ -445,6 +451,11 @@ export default defineComponent({
           font-size: 14px;
           line-height: 20px;
           font-weight: 500;
+          border-bottom: 1px solid #dfe1e6;
+
+          &:last-child {
+            border-bottom: none;
+          }
 
           &:hover {
             background-color: #f0f2f4;
@@ -472,6 +483,13 @@ export default defineComponent({
         }
       }
     }
+  }
+
+  .cp-combobox__error {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 4px;
+    font-weight: 400;
   }
 }
 
