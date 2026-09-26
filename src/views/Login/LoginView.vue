@@ -77,7 +77,7 @@ const submit = async () => {
     flex-direction: column;
     gap: 12px;
     background-color: $color-card-background;
-    border-radius: 8px;
+    border-radius: $radius-lg;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     padding: 24px;
 
@@ -95,7 +95,7 @@ const submit = async () => {
   .error-message {
     font-size: 14px;
     padding: 8px;
-    border-radius: 4px;
+    border-radius: $radius-md;
     text-align: center;
   }
 
@@ -116,8 +116,8 @@ const submit = async () => {
 
   .login__input {
     padding: 10px 16px;
-    border: 1px solid $color-border;
-    border-radius: 5px;
+    border: 1px solid $color-border-strong;
+    border-radius: $radius-md;
     font-size: 16px;
 
     &:focus {
@@ -129,7 +129,7 @@ const submit = async () => {
   .login__button {
     padding: 10px 16px;
     border: none;
-    border-radius: 6px;
+    border-radius: $radius-md;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;

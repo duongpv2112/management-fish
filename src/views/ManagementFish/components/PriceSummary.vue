@@ -85,7 +85,7 @@
       </div>
 
       <div class="price-summary__actions no-print">
-        <CPButton class="btn-print" textButton="In phiếu" height="36px" @click="printSummary" />
+        <CPButton class="btn-print" textButton="In phiếu" height="40px" @click="printSummary" />
       </div>
     </template>
   </div>
@@ -139,7 +139,7 @@ const printSummary = () => {
     margin-bottom: 12px;
     font-size: 14px;
     padding: 8px;
-    border-radius: 4px;
+    border-radius: $radius-md;
     text-align: center;
     color: $color-error;
     background-color: lighten($color-error, 40%);
@@ -192,8 +192,8 @@ const printSummary = () => {
     .price-input {
       width: 100px;
       padding: 4px 8px;
-      border: 1px solid $color-border;
-      border-radius: 4px;
+      border: 1px solid $color-border-strong;
+      border-radius: $radius-md;
       text-align: right;
 
       &:focus {

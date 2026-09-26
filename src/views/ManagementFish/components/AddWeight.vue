@@ -66,6 +66,7 @@
     </div>
     <CPButton
       class="btn-add-weight add-weight__save"
+      typeButton="primary"
       idControl="btnSaveFishWeight"
       height="52px"
       textButton="Lưu số cân"
@@ -401,7 +402,7 @@ onBeforeUnmount(clearUndo);
 .add-weight-container {
   width: 100%;
   border: 1px solid $color-border;
-  border-radius: 8px;
+  border-radius: $radius-lg;
   padding: 16px;
   background-color: $color-card-background;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -421,7 +422,7 @@ onBeforeUnmount(clearUndo);
     margin-bottom: 16px;
     font-size: 14px;
     padding: 8px;
-    border-radius: 4px;
+    border-radius: $radius-md;
     text-align: center;
   }
 
@@ -443,7 +444,7 @@ onBeforeUnmount(clearUndo);
     .btn-undo {
       padding: 4px 12px;
       border: 1px solid $color-success;
-      border-radius: 4px;
+      border-radius: $radius-md;
       background-color: $color-card-background;
       color: $color-success;
       font-weight: 600;
@@ -492,21 +493,6 @@ onBeforeUnmount(clearUndo);
   .btn-add-weight {
     margin-top: 20px;
     width: 100%;
-    background-color: $color-primary;
-    color: $color-card-background;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-
-    &:hover:not(:disabled) {
-      background-color: darken($color-primary, 10%);
-    }
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
 
     :deep(.button-control) {
       font-size: 17px;
@@ -542,7 +528,7 @@ onBeforeUnmount(clearUndo);
       bottom: calc(56px + 8px + env(safe-area-inset-bottom));
       z-index: 700;
       margin-top: 0;
-      border-radius: 12px;
+      border-radius: $radius-md;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 
       :deep(.button-control) {

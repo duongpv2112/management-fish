@@ -10,7 +10,7 @@
           idControl="editFishType"
           labelControl="Loại cá"
           :modelValue="fishTypeValue"
-          height="36px"
+          height="40px"
           :lstData="fishTypes"
           dataField="_id"
           dataFieldText="fishName"
@@ -20,7 +20,7 @@
           idControl="editBasketType"
           labelControl="Loại giỏ"
           :modelValue="basketTypeValue"
-          height="36px"
+          height="40px"
           :lstData="basketTypes"
           dataField="_id"
           dataFieldText="basketName"
@@ -30,7 +30,7 @@
           idControl="editFishWeight"
           labelControl="Số cân (gồm giỏ)"
           :modelValue="fishWeightValue"
-          height="36px"
+          height="40px"
           :typeInput="1"
           @update="($event) => (fishWeightValue = $event)"
           @enter="save"
@@ -45,10 +45,10 @@
       </div>
 
       <div class="weight-edit-actions">
-        <CPButton class="btn-delete" textButton="Xóa" :disabled="isSaving" @click="remove" />
+        <CPButton class="btn-delete" typeButton="danger" textButton="Xóa" :disabled="isSaving" @click="remove" />
         <div class="weight-edit-actions__right">
           <CPButton class="btn-close" textButton="Đóng" @click="emit('close')" />
-          <CPButton class="btn-save" textButton="Lưu" :disabled="isSaving" @click="save" />
+          <CPButton class="btn-save" typeButton="primary" textButton="Lưu" :disabled="isSaving" @click="save" />
         </div>
       </div>
     </div>
@@ -173,7 +173,7 @@ const remove = async () => {
     width: 100%;
     max-width: 420px;
     background-color: $color-card-background;
-    border-radius: 8px;
+    border-radius: $radius-lg;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
     padding: 20px;
 
@@ -189,7 +189,7 @@ const remove = async () => {
       margin-bottom: 16px;
       font-size: 14px;
       padding: 8px;
-      border-radius: 4px;
+      border-radius: $radius-md;
       text-align: center;
       color: $color-error;
       background-color: lighten($color-error, 40%);

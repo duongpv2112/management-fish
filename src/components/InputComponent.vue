@@ -153,14 +153,17 @@ const resolvedInputmode = computed(() => {
     user-select: none;
     position: relative;
     display: flex;
-    border: 1px solid #dfe1e6;
-    border-radius: 5px;
+    border: 1px solid $color-border-strong;
+    background-color: $color-card-background;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    border-radius: $radius-md;
     padding: 1px 0 1px 1px;
     width: v-bind(width);
     height: v-bind(height);
 
     &.cp-input--focus {
-      border-color: #0065ff !important;
+      border-color: $color-primary !important;
+      box-shadow: 0 0 0 3px $color-focus-ring;
     }
 
     &.cp-input--disabled {
@@ -169,11 +172,11 @@ const resolvedInputmode = computed(() => {
     }
 
     &.cp-input--error {
-      border-color: #dc3545;
+      border-color: $color-error;
     }
 
     &:hover:not(.cp-input--disabled) {
-      border-color: #6b778c;
+      border-color: $color-primary;
     }
 
     .input-control {

@@ -326,7 +326,7 @@ $card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
 @mixin card {
   background-color: $color-card-background;
-  border-radius: 8px;
+  border-radius: $radius-lg;
   box-shadow: $card-shadow;
   padding: 16px;
 }
@@ -334,7 +334,7 @@ $card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 .load-error {
   color: $color-error;
   background-color: lighten($color-error, 40%);
-  border-radius: 4px;
+  border-radius: $radius-md;
   padding: 8px;
   margin-bottom: 12px;
   text-align: center;
@@ -454,7 +454,7 @@ $card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
     button {
       min-height: 48px;
-      border-radius: 10px;
+      border-radius: $radius-md;
       font-size: 16px;
       font-weight: 700;
       cursor: pointer;
@@ -467,7 +467,7 @@ $card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     .btn-new-session-mobile {
-      border: 2px solid $color-primary;
+      border: 1px solid $color-border-strong;
       background-color: $color-card-background;
       color: $color-primary;
     }

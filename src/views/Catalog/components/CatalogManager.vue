@@ -15,14 +15,15 @@
         :modelValue="newItem[field.key]"
         :placeholderText="field.placeholder"
         :typeInput="field.type === 'number' ? 1 : 2"
-        height="36px"
+        height="40px"
         @update="($event) => (newItem[field.key] = $event)"
         @enter="addItem"
       />
       <CPButton
         class="catalog-add__button"
+        typeButton="primary"
         textButton="Thêm mới"
-        height="36px"
+        height="40px"
         :disabled="isSaving"
         @click="addItem"
       />
@@ -54,7 +55,7 @@
               />
             </td>
             <td class="catalog-table__actions">
-              <CPButton class="btn-save" textButton="Lưu" :disabled="isSaving" @click="saveEdit" />
+              <CPButton class="btn-save" typeButton="primary" textButton="Lưu" :disabled="isSaving" @click="saveEdit" />
               <CPButton class="btn-cancel" textButton="Hủy" @click="cancelEdit" />
             </td>
           </template>
@@ -68,7 +69,7 @@
             </td>
             <td class="catalog-table__actions">
               <CPButton class="btn-edit" textButton="Sửa" @click="startEdit(item)" />
-              <CPButton class="btn-delete" textButton="Xóa" @click="deleteItem(item)" />
+              <CPButton class="btn-delete" typeButton="danger" textButton="Xóa" @click="deleteItem(item)" />
             </td>
           </template>
         </tr>
@@ -236,7 +237,7 @@ onMounted(loadItems);
   flex: 1;
   min-width: 320px;
   background-color: $color-card-background;
-  border-radius: 8px;
+  border-radius: $radius-lg;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   padding: 16px;
 
@@ -253,7 +254,7 @@ onMounted(loadItems);
     margin-bottom: 16px;
     font-size: 14px;
     padding: 8px;
-    border-radius: 4px;
+    border-radius: $radius-md;
     text-align: center;
   }
 

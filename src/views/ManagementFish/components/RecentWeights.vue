@@ -106,7 +106,7 @@ const removeItem = async (item) => {
   width: 100%;
   margin-top: 0;
   border: 1px solid $color-border;
-  border-radius: 8px;
+  border-radius: $radius-lg;
   padding: 16px;
   background-color: $color-card-background;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -122,7 +122,7 @@ const removeItem = async (item) => {
     margin-bottom: 12px;
     font-size: 14px;
     padding: 8px;
-    border-radius: 4px;
+    border-radius: $radius-md;
     text-align: center;
     color: $color-error;
     background-color: lighten($color-error, 40%);
@@ -180,9 +180,11 @@ const removeItem = async (item) => {
 
       button {
         padding: 6px 12px;
-        border: 1px solid $color-border;
-        border-radius: 4px;
+        border: 1px solid $color-border-strong;
+        border-radius: $radius-md;
         background-color: $color-card-background;
+        color: $color-primary;
+        font-weight: 600;
         cursor: pointer;
 
         &:hover:not(:disabled) {
@@ -197,6 +199,11 @@ const removeItem = async (item) => {
 
       .btn-recent-delete {
         color: $color-error;
+        border-color: lighten($color-error, 32%);
+
+        &:hover:not(:disabled) {
+          background-color: lighten($color-error, 44%);
+        }
       }
     }
   }

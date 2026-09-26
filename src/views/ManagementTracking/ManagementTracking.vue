@@ -9,7 +9,7 @@
           idControl="logFishType"
           labelControl="Loại cá"
           :modelValue="fishTypeFilter"
-          height="36px"
+          height="40px"
           :lstData="fishTypeOptions"
           dataField="value"
           dataFieldText="text"
@@ -175,7 +175,7 @@ onMounted(async () => {
 
   .management-tracking__card {
     background-color: $color-card-background;
-    border-radius: 8px;
+    border-radius: $radius-lg;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     padding: 16px;
   }
@@ -189,7 +189,7 @@ onMounted(async () => {
     margin-bottom: 16px;
     font-size: 14px;
     padding: 8px;
-    border-radius: 4px;
+    border-radius: $radius-md;
     text-align: center;
     color: $color-error;
     background-color: lighten($color-error, 40%);
@@ -270,10 +270,13 @@ onMounted(async () => {
     margin-top: 16px;
 
     .page-btn {
+      min-height: 40px;
       padding: 8px 16px;
-      border: 1px solid $color-border;
-      border-radius: 4px;
+      border: 1px solid $color-border-strong;
+      border-radius: $radius-md;
       background-color: $color-card-background;
+      color: $color-primary;
+      font-weight: 600;
       cursor: pointer;
 
       &:hover:not(:disabled) {

@@ -83,7 +83,7 @@ const editItem = (card, item) => {
     font-size: 15px;
     color: $color-text-primary;
     background-color: $color-card-background;
-    border-radius: 10px;
+    border-radius: $radius-lg;
   }
 
   .edit-hint {
@@ -95,7 +95,7 @@ const editItem = (card, item) => {
 
 .fish-card {
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: $radius-lg;
   background-color: $color-card-background;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 
@@ -131,7 +131,7 @@ const editItem = (card, item) => {
     min-height: 40px;
     padding: 0 8px;
     border: 1px solid $color-border;
-    border-radius: 8px;
+    border-radius: $radius-md;
     background-color: $color-background;
     color: $color-text-primary;
     font-size: 16px;

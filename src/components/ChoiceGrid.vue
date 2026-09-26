@@ -172,8 +172,8 @@ const pickFromSheet = (item) => {
   .choice-grid__item {
     min-height: 44px;
     padding: 4px 6px;
-    border: 2px solid $color-border;
-    border-radius: 10px;
+    border: 1px solid $color-border-strong;
+    border-radius: $radius-md;
     background-color: $color-card-background;
     color: $color-text-primary;
     font-size: 15px;
@@ -187,6 +187,8 @@ const pickFromSheet = (item) => {
 
     &.choice-grid__item--selected {
       border-color: $color-primary;
+      // Viền dày thêm bằng bóng trong, không làm xô chữ
+      box-shadow: inset 0 0 0 1px $color-primary;
       background-color: $color-hover;
       color: $color-primary;
     }
@@ -225,13 +227,14 @@ const pickFromSheet = (item) => {
     min-height: 44px;
     padding: 8px 12px;
     margin-bottom: 8px;
-    border: 2px solid $color-border;
-    border-radius: 10px;
+    border: 1px solid $color-border-strong;
+    border-radius: $radius-md;
     font-size: 16px;
 
     &:focus {
       outline: none;
       border-color: $color-primary;
+      box-shadow: 0 0 0 3px $color-focus-ring;
     }
   }
 
