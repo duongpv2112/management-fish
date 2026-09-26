@@ -6,9 +6,13 @@
 
       <div class="price-cards__currency" v-if="summary">
         <label for="currencySelectMobile">Loại tiền</label>
-        <select id="currencySelectMobile" :value="currency" :disabled="isSaving" @change="changeCurrency($event)">
-          <option v-for="(item, code) in CURRENCIES" :key="code" :value="code">{{ item.label }}</option>
-        </select>
+        <CPSelect
+          idControl="currencySelectMobile"
+          :modelValue="currency"
+          :options="CURRENCY_OPTIONS"
+          :disabled="isSaving"
+          @change="changeCurrency"
+        />
       </div>
 
       <template v-if="summary">
@@ -65,7 +69,8 @@ import { ref, toRef } from "vue";
 
 import StatisticData from "./StatisticData.vue";
 import SummaryPrintTable from "./SummaryPrintTable.vue";
-import { CURRENCIES } from "@/common/currency";
+import CPSelect from "@/components/SelectComponent.vue";
+import { CURRENCY_OPTIONS } from "@/common/currency";
 import { useSessionSummary } from "@/composables/useSessionSummary";
 
 // Tab "Tiền" trên điện thoại: mỗi loại cá một thẻ, ô giá to; logic dùng chung với PriceSummary
@@ -106,7 +111,7 @@ const printSummary = () => {
 
   .price-cards__empty {
     padding: 24px 8px;
-    border-radius: 10px;
+    border-radius: $radius-lg;
     background-color: $color-card-background;
     text-align: center;
     font-size: 15px;
@@ -114,7 +119,7 @@ const printSummary = () => {
 
   .error-message {
     padding: 8px;
-    border-radius: 4px;
+    border-radius: $radius-md;
     font-size: 14px;
     text-align: center;
     color: $color-error;
@@ -128,20 +133,11 @@ const printSummary = () => {
     gap: 8px;
     font-size: 15px;
     font-weight: 600;
-
-    select {
-      min-height: 44px;
-      padding: 0 10px;
-      border: 2px solid $color-border;
-      border-radius: 8px;
-      background-color: $color-card-background;
-      font-size: 16px;
-    }
   }
 
   .price-cards__total {
     padding: 12px;
-    border-radius: 10px;
+    border-radius: $radius-lg;
     background-color: $color-primary;
     color: $color-card-background;
     font-weight: 700;
@@ -167,8 +163,8 @@ const printSummary = () => {
     button {
       flex: 1;
       min-height: 48px;
-      border: 2px solid $color-primary;
-      border-radius: 10px;
+      border: 1px solid $color-border-strong;
+      border-radius: $radius-md;
       background-color: $color-card-background;
       color: $color-primary;
       font-size: 16px;
@@ -180,7 +176,7 @@ const printSummary = () => {
 
 .price-card {
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: $radius-lg;
   background-color: $color-card-background;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 
@@ -219,8 +215,8 @@ const printSummary = () => {
     min-width: 0;
     min-height: 44px;
     padding: 0 10px;
-    border: 2px solid $color-border;
-    border-radius: 8px;
+    border: 1px solid $color-border-strong;
+    border-radius: $radius-md;
     text-align: right;
     font-size: 16px;
     font-weight: 600;
@@ -228,6 +224,7 @@ const printSummary = () => {
     &:focus {
       outline: none;
       border-color: $color-primary;
+      box-shadow: 0 0 0 3px $color-focus-ring;
     }
   }
 }

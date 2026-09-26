@@ -44,7 +44,7 @@ const links = [
     margin-left: auto;
     padding: 8px 16px;
     border: 1px solid $color-card-background;
-    border-radius: 6px;
+    border-radius: $radius-md;
     background: transparent;
     color: $color-card-background;
     font-weight: 600;
@@ -57,7 +57,7 @@ const links = [
 
   .app-nav__link {
     padding: 8px 16px;
-    border-radius: 6px;
+    border-radius: $radius-md;
     color: $color-card-background;
     text-decoration: none;
     font-weight: 600;

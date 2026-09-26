@@ -178,7 +178,7 @@ describe("Lưới chọn cá/giỏ", () => {
   const saveButton = (wrapper) => wrapper.find("#btnSaveFishWeight");
   const firstFishText = (wrapper) => wrapper.find("#fishType .choice-grid__item .choice-grid__text").text();
 
-  test("cá cân nhiều trong phiên đứng đầu lưới", async () => {
+  test("thứ tự nút cá theo danh mục, không đổi theo số lần cân trong phiên", async () => {
     vi.mocked(FishTypeAPI.getFishTypes).mockResolvedValueOnce(twoFish);
     const wrapper = await mountForm({
       sessionFishData: [
@@ -194,7 +194,7 @@ describe("Lưới chọn cá/giỏ", () => {
         },
       ],
     });
-    expect(firstFishText(wrapper)).toBe("Cá mè");
+    expect(firstFishText(wrapper)).toBe("Cá trắm");
   });
 
   test("chạm nút cá/giỏ để chọn", async () => {

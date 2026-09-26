@@ -6,6 +6,9 @@ export const CURRENCIES = {
 
 export const DEFAULT_CURRENCY = "VND";
 
+// Lựa chọn cho ô chọn loại tiền (CPSelect)
+export const CURRENCY_OPTIONS = Object.entries(CURRENCIES).map(([value, item]) => ({ value, label: item.label }));
+
 const getCurrency = (currency) => CURRENCIES[currency] ?? CURRENCIES[DEFAULT_CURRENCY];
 
 // Chỉ phần số: VND "45.000", USD "1,250.50"

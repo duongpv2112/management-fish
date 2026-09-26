@@ -127,7 +127,7 @@ const closeSession = async () => {
   .session-sheet__error {
     margin-bottom: 8px;
     padding: 8px;
-    border-radius: 4px;
+    border-radius: $radius-md;
     font-size: 14px;
     text-align: center;
     color: $color-error;
@@ -177,7 +177,7 @@ const closeSession = async () => {
 
   .session-sheet__badge {
     padding: 2px 8px;
-    border-radius: 10px;
+    border-radius: $radius-sm;
     font-size: 12px;
     background-color: $color-border;
 
@@ -201,7 +201,7 @@ const closeSession = async () => {
     button {
       flex: 1;
       min-height: 48px;
-      border-radius: 10px;
+      border-radius: $radius-md;
       font-size: 16px;
       font-weight: 700;
       cursor: pointer;
@@ -219,7 +219,7 @@ const closeSession = async () => {
     }
 
     .btn-sheet-close {
-      border: 2px solid $color-error;
+      border: 1px solid lighten($color-error, 32%);
       background-color: $color-card-background;
       color: $color-error;
     }

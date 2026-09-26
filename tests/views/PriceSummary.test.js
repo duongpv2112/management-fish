@@ -7,6 +7,7 @@ vi.mock("@/services/weighSessionAPI", () => ({
 
 import WeighSessionAPI from "@/services/weighSessionAPI";
 import PriceSummary from "@/views/ManagementFish/components/PriceSummary.vue";
+import { chooseOption } from "../helpers/select";
 
 const summary = () => ({
   session: {
@@ -142,7 +143,7 @@ test("VND: tiêu đề cột đ/kg, ô đơn giá có ký hiệu đ, loại ti�
   const wrapper = await mountSummary();
   expect(wrapper.find("thead").text()).toContain("Đơn giá (đ/kg)");
   expect(wrapper.find(".price-input-wrapper .price-input-symbol").text()).toBe("đ");
-  expect(wrapper.find("#currencySelect").element.value).toBe("VND");
+  expect(wrapper.find("#currencySelect").text()).toBe("VND (đ)");
 });
 
 test("USD: tiêu đề $/kg, ô đơn giá 1.75 kèm $, thành tiền $27.00", async () => {
@@ -153,7 +154,7 @@ test("USD: tiêu đề $/kg, ô đơn giá 1.75 kèm $, thành tiền $27.00", a
   expect(wrapper.find(".price-input-symbol").text()).toBe("$");
   expect(wrapper.find("tbody").text()).toContain("$27.00");
   expect(wrapper.find("tfoot").text()).toContain("$27.00");
-  expect(wrapper.find("#currencySelect").element.value).toBe("USD");
+  expect(wrapper.find("#currencySelect").text()).toBe("USD ($)");
 });
 
 test('USD: nhập "2,5" → gửi 2.5', async () => {
@@ -171,7 +172,7 @@ test("đổi loại tiền khi đã có giá: hỏi xác nhận, đồng ý thì
   const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
   vi.mocked(WeighSessionAPI.updateSessionCurrency).mockResolvedValue({ success: true, data: {} });
   const wrapper = await mountSummary();
-  await wrapper.find("#currencySelect").setValue("USD");
+  await chooseOption(wrapper, "#currencySelect", "USD");
   await flushPromises();
 
   expect(confirmSpy).toHaveBeenCalledWith("Đổi loại tiền sẽ xóa đơn giá đã nhập của phiên này. Tiếp tục?");
@@ -182,10 +183,10 @@ test("đổi loại tiền khi đã có giá: hỏi xác nhận, đồng ý thì
 test("đổi loại tiền nhưng bấm Hủy: không gọi API, ô chọn trở về VND", async () => {
   vi.spyOn(window, "confirm").mockReturnValue(false);
   const wrapper = await mountSummary();
-  await wrapper.find("#currencySelect").setValue("USD");
+  await chooseOption(wrapper, "#currencySelect", "USD");
   await flushPromises();
   expect(WeighSessionAPI.updateSessionCurrency).not.toHaveBeenCalled();
-  expect(wrapper.find("#currencySelect").element.value).toBe("VND");
+  expect(wrapper.find("#currencySelect").text()).toBe("VND (đ)");
 });
 
 test("chưa có giá nào thì đổi loại tiền không cần xác nhận", async () => {
@@ -195,7 +196,7 @@ test("chưa có giá nào thì đổi loại tiền không cần xác nhận", a
   noPrice.lines = noPrice.lines.map((line) => ({ ...line, unitPrice: null, amount: null }));
   vi.mocked(WeighSessionAPI.getSessionSummary).mockResolvedValue({ success: true, data: noPrice });
   const wrapper = await mountSummary();
-  await wrapper.find("#currencySelect").setValue("USD");
+  await chooseOption(wrapper, "#currencySelect", "USD");
   await flushPromises();
   expect(confirmSpy).not.toHaveBeenCalled();
   expect(WeighSessionAPI.updateSessionCurrency).toHaveBeenCalledWith("s1", "USD");
@@ -205,8 +206,8 @@ test("đổi loại tiền lỗi: hiện message, ô chọn trở về loại c�
   vi.spyOn(window, "confirm").mockReturnValue(true);
   vi.mocked(WeighSessionAPI.updateSessionCurrency).mockRejectedValue(new Error("Loại tiền không hợp lệ!"));
   const wrapper = await mountSummary();
-  await wrapper.find("#currencySelect").setValue("USD");
+  await chooseOption(wrapper, "#currencySelect", "USD");
   await flushPromises();
   expect(wrapper.find(".error-message").text()).toBe("Loại tiền không hợp lệ!");
-  expect(wrapper.find("#currencySelect").element.value).toBe("VND");
+  expect(wrapper.find("#currencySelect").text()).toBe("VND (đ)");
 });

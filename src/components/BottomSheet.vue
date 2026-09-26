@@ -63,7 +63,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", handleKeydown));
   display: flex;
   flex-direction: column;
   background-color: $color-card-background;
-  border-radius: 18px 18px 0 0;
+  border-radius: $radius-xl $radius-xl 0 0;
   box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.25);
   padding: 8px 12px calc(12px + env(safe-area-inset-bottom));
   animation: slideUp 0.2s ease-out;

@@ -48,6 +48,18 @@ test("nhiều loại → 5 nút theo xếp hạng + '＋ Loại khác (3)'", () 
   wrapper.unmount();
 });
 
+test("xếp hạng chỉ chọn loại nào hiện; thứ tự nút và Loại khác luôn theo danh mục", async () => {
+  const wrapper = mountGrid({ ranking: ["f8", "f7", "f6", "f5", "f4", "f3", "f2", "f1"] });
+  expect(gridTexts(wrapper)).toEqual(["Cá rô phi loại 2", "Cá chép", "Cá trôi", "Cá lăng", "Cá rô đồng"]);
+  await wrapper.find(".choice-grid__more").trigger("click");
+  expect(wrapper.findAll(".choice-grid__option").map((node) => node.text())).toEqual([
+    "Cá trắm",
+    "Cá mè",
+    "Cá rô phi loại 1",
+  ]);
+  wrapper.unmount();
+});
+
 test("item đang chọn ngoài nhóm hiện được đưa lên vị trí cuối và sáng", () => {
   const wrapper = mountGrid({ modelValue: "f7" });
   expect(gridTexts(wrapper)).toEqual(["Cá trắm", "Cá mè", "Cá rô phi loại 1", "Cá rô phi loại 2", "Cá lăng"]);

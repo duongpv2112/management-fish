@@ -121,24 +121,26 @@ const searchRef = ref(null);
 
 const itemById = computed(() => new Map(props.items.map((item) => [item[props.valueField], item])));
 
-// Thứ tự hiển thị: theo ranking, id thiếu trong ranking xếp sau theo thứ tự danh mục
-const orderedItems = computed(() => {
+// Xếp hạng: theo ranking, id thiếu trong ranking xếp sau theo thứ tự danh mục
+const rankedItems = computed(() => {
   const ranked = props.ranking.filter((id) => itemById.value.has(id)).map((id) => itemById.value.get(id));
   const rankedIds = new Set(ranked.map((item) => item[props.valueField]));
   return [...ranked, ...props.items.filter((item) => !rankedIds.has(item[props.valueField]))];
 });
 
-// Ít loại thì hiện hết (không cần nút "Loại khác" chỉ để giấu 1 loại)
+// Xếp hạng chỉ quyết định loại nào được hiện; nút luôn đứng theo thứ tự danh mục
+// để người quen bấm theo vị trí không bị bấm nhầm khi thứ hạng thay đổi
 const visibleItems = computed(() => {
-  if (orderedItems.value.length <= props.maxVisible + 1) return orderedItems.value;
-  const visible = orderedItems.value.slice(0, props.maxVisible);
+  // Ít loại thì hiện hết (không cần nút "Loại khác" chỉ để giấu 1 loại)
+  if (props.items.length <= props.maxVisible + 1) return props.items;
+  const chosen = rankedItems.value.slice(0, props.maxVisible);
   const selected = itemById.value.get(props.modelValue);
   // Lựa chọn hiện tại (vd. từ giọng nói) luôn phải thấy được trên lưới
-  if (selected && !visible.includes(selected)) visible[visible.length - 1] = selected;
-  return visible;
+  if (selected && !chosen.includes(selected)) chosen[chosen.length - 1] = selected;
+  return props.items.filter((item) => chosen.includes(item));
 });
 
-const hiddenItems = computed(() => orderedItems.value.filter((item) => !visibleItems.value.includes(item)));
+const hiddenItems = computed(() => props.items.filter((item) => !visibleItems.value.includes(item)));
 
 const filteredHiddenItems = computed(() => {
   const text = normalizeVi(query.value);
@@ -170,8 +172,8 @@ const pickFromSheet = (item) => {
   .choice-grid__item {
     min-height: 44px;
     padding: 4px 6px;
-    border: 2px solid $color-border;
-    border-radius: 10px;
+    border: 1px solid $color-border-strong;
+    border-radius: $radius-md;
     background-color: $color-card-background;
     color: $color-text-primary;
     font-size: 15px;
@@ -185,6 +187,8 @@ const pickFromSheet = (item) => {
 
     &.choice-grid__item--selected {
       border-color: $color-primary;
+      // Viền dày thêm bằng bóng trong, không làm xô chữ
+      box-shadow: inset 0 0 0 1px $color-primary;
       background-color: $color-hover;
       color: $color-primary;
     }
@@ -223,13 +227,14 @@ const pickFromSheet = (item) => {
     min-height: 44px;
     padding: 8px 12px;
     margin-bottom: 8px;
-    border: 2px solid $color-border;
-    border-radius: 10px;
+    border: 1px solid $color-border-strong;
+    border-radius: $radius-md;
     font-size: 16px;
 
     &:focus {
       outline: none;
       border-color: $color-primary;
+      box-shadow: 0 0 0 3px $color-focus-ring;
     }
   }
 
