@@ -17,6 +17,7 @@
         :value="modelValue"
         :placeholder="placeholderText"
         :disabled="disabled"
+        :inputmode="resolvedInputmode"
         @input="handleChangeInput"
         @keydown="handleKeyPress"
         @focus="handleFocusInput"
@@ -27,7 +28,7 @@
   </div>
 </template>
 <script setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
 
 const props = defineProps({
   idControl: {
@@ -62,6 +63,11 @@ const props = defineProps({
     type: Number,
     default: 2,
   },
+  // Kiểu bàn phím trên điện thoại; ô số (typeInput 1) mặc định "decimal"
+  inputmode: {
+    type: String,
+    default: "",
+  },
   disabled: {
     type: Boolean,
     default: false,
@@ -93,8 +99,10 @@ const handleKeyPress = ($event) => {
   }
   switch (props.typeInput) {
     case typeInputEnum.value.NumberType:
-      // Chỉ cho phép các phím số (0-9), phím Backspace, phím Delete, phím Tab và phím mũi tên
+      // Chỉ cho phép các phím số (0-9), dấu thập phân (. hoặc ,), phím Backspace, phím Delete, phím Tab và phím mũi tên
       const allowedKeys = [
+        ".",
+        ",",
         "Backspace",
         "Delete",
         "Tab",
@@ -125,6 +133,12 @@ const typeInputEnum = ref({
   NumberType: 1,
   TextType: 2,
 });
+
+// Ô số trên điện thoại mở bàn phím số (có dấu thập phân) thay vì bàn phím chữ
+const resolvedInputmode = computed(() => {
+  if (props.inputmode) return props.inputmode;
+  return props.typeInput === typeInputEnum.value.NumberType ? "decimal" : undefined;
+});
 </script>
 <style lang="scss" scoped>
 .cp-input {
@@ -139,14 +153,17 @@ const typeInputEnum = ref({
     user-select: none;
     position: relative;
     display: flex;
-    border: 1px solid #dfe1e6;
-    border-radius: 5px;
+    border: 1px solid $color-border-strong;
+    background-color: $color-card-background;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    border-radius: $radius-md;
     padding: 1px 0 1px 1px;
     width: v-bind(width);
     height: v-bind(height);
 
     &.cp-input--focus {
-      border-color: #0065ff !important;
+      border-color: $color-primary !important;
+      box-shadow: 0 0 0 3px $color-focus-ring;
     }
 
     &.cp-input--disabled {
@@ -155,11 +172,11 @@ const typeInputEnum = ref({
     }
 
     &.cp-input--error {
-      border-color: #dc3545;
+      border-color: $color-error;
     }
 
     &:hover:not(.cp-input--disabled) {
-      border-color: #6b778c;
+      border-color: $color-primary;
     }
 
     .input-control {
@@ -185,6 +202,19 @@ const typeInputEnum = ref({
     font-size: 12px;
     margin-top: 4px;
     font-weight: 400;
+  }
+}
+
+// Điện thoại: ô nhập đủ cao để chạm, chữ 16px để iPhone không tự phóng to
+@media (max-width: 899.98px) {
+  .cp-input {
+    .cp-input__control {
+      min-height: 44px;
+    }
+
+    .input-control {
+      font-size: 16px;
+    }
   }
 }
 </style>

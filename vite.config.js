@@ -15,6 +15,10 @@ export default defineConfig({
   server: {
     port: 3001,
   },
+  test: {
+    environment: "jsdom",
+    setupFiles: ["./tests/setup.js"],
+  },
   css: {
     preprocessorOptions: {
       scss: {

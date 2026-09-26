@@ -34,6 +34,20 @@ export const common = {
     }
   },
 
+  /**
+   * Chuyển chuỗi số (chấp nhận dấu thập phân "," hoặc ".") thành số
+   * @param {string|number|null} value Giá trị cần chuyển, ví dụ "25,5"
+   * @returns {number|null} Số đã chuyển, hoặc null nếu rỗng/không hợp lệ
+   */
+  parseDecimal(value) {
+    if (value === null || value === undefined) return null;
+    if (typeof value === "number") return Number.isFinite(value) ? value : null;
+
+    const text = String(value).trim().replace(",", ".");
+    if (!/^\d+(\.\d+)?$/.test(text)) return null;
+    return Number(text);
+  },
+
   createUUID() {
     var dt = new Date().getTime();
     var uuid = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
