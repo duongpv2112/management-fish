@@ -33,12 +33,7 @@
     </section>
 
     <section v-if="activeMobileTab === 'bang'" class="mobile-panel">
-      <DataViewer
-        ref="dataViewerRef"
-        :isLoading="isLoading"
-        :readOnly="isSessionClosed"
-        @editItem="openEditDialog"
-      ></DataViewer>
+      <FishWeightCards :fishData="fishData" :readOnly="isSessionClosed" @editItem="openEditDialog" />
     </section>
 
     <section v-if="activeMobileTab === 'tien'" class="mobile-panel">
@@ -164,6 +159,7 @@ import { sessionLabel } from "@/common/sessionLabel";
 
 import MobileTabBar from "./components/MobileTabBar.vue";
 import SessionSheet from "./components/SessionSheet.vue";
+import FishWeightCards from "./components/FishWeightCards.vue";
 import SessionBar from "./components/SessionBar.vue";
 import DataViewer from "./components/DataViewer.vue";
 import AddWeight from "./components/AddWeight.vue";

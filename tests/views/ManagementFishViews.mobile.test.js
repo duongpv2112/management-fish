@@ -25,6 +25,7 @@ import MobileTabBar from "@/views/ManagementFish/components/MobileTabBar.vue";
 import PriceSummary from "@/views/ManagementFish/components/PriceSummary.vue";
 import DataViewer from "@/views/ManagementFish/components/DataViewer.vue";
 import SessionSheet from "@/views/ManagementFish/components/SessionSheet.vue";
+import FishWeightCards from "@/views/ManagementFish/components/FishWeightCards.vue";
 import { topBarAction, clearTopBarAction } from "@/common/topBarAction";
 
 const openSession = { _id: "s2", sessionName: "Phiên 26/09/2026", status: "open", createdAt: "2026-09-26T01:00:00Z" };
@@ -84,7 +85,8 @@ test("bấm tab Bảng → ghi ?tab=bang; về tab Cân → bỏ tab khỏi URL"
   wrapper.findComponent(MobileTabBar).vm.$emit("update:modelValue", "bang");
   await flushPromises();
   expect(router.currentRoute.value.query.tab).toBe("bang");
-  expect(wrapper.findComponent(DataViewer).exists()).toBe(true);
+  expect(wrapper.findComponent(FishWeightCards).exists()).toBe(true);
+  expect(wrapper.findComponent(DataViewer).exists()).toBe(false);
 
   wrapper.findComponent(MobileTabBar).vm.$emit("update:modelValue", "can");
   await flushPromises();
@@ -153,4 +155,24 @@ test("máy tính: không có thanh tab, có cả bảng và form cân", async ()
   expect(wrapper.findComponent(DataViewer).exists()).toBe(true);
   expect(wrapper.findComponent(AddWeight).exists()).toBe(true);
   expect(topBarAction.label).toBe("");
+});
+
+test("tab Bảng: thẻ nhận dữ liệu phiên; chạm số cân → mở hộp thoại sửa", async () => {
+  const data = [
+    {
+      _id: "f1",
+      fishName: "Cá trắm",
+      fishWeights: [20],
+      fishWeightItems: [{ _id: "w1", fishWeight: 20, netWeight: 18, basketType: "b1", createdAt: "2026-09-26T01:00:00Z" }],
+    },
+  ];
+  vi.mocked(FishTypeAPI.getDataFish).mockResolvedValue({ data });
+  const { wrapper } = await mountAt("/?tab=bang");
+  const cards = wrapper.findComponent(FishWeightCards);
+  expect(cards.props("fishData")).toEqual(data);
+  expect(cards.props("readOnly")).toBe(false);
+
+  cards.vm.$emit("editItem", { _id: "w1", fishType: "f1", fishWeight: 20 });
+  await flushPromises();
+  expect(wrapper.findComponent({ name: "WeightEditDialog" }).exists()).toBe(true);
 });
