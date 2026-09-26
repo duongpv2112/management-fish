@@ -80,14 +80,12 @@ export const useSessionSummary = (sessionIdRef, refreshKeyRef) => {
   };
 
   // Đổi loại tiền của phiên: server xóa bảng giá cũ nên hỏi lại nếu đã nhập giá
-  const changeCurrency = async ($event) => {
-    const select = $event.target;
-    const newCurrency = select.value;
+  // Ô chọn hiển thị theo currency của phiên, nên hủy/lỗi thì tự trở về loại cũ
+  const changeCurrency = async (newCurrency) => {
     if (newCurrency === currency.value) return;
 
     const hasPrices = summary.value?.lines.some((line) => line.unitPrice !== null);
     if (hasPrices && !window.confirm("Đổi loại tiền sẽ xóa đơn giá đã nhập của phiên này. Tiếp tục?")) {
-      select.value = currency.value;
       return;
     }
 
@@ -98,7 +96,6 @@ export const useSessionSummary = (sessionIdRef, refreshKeyRef) => {
       await loadSummary();
     } catch (error) {
       errorMessage.value = error?.message || "Đổi loại tiền không thành công!";
-      select.value = currency.value;
     } finally {
       isSaving.value = false;
     }

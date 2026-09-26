@@ -2,6 +2,7 @@ import { test, expect, describe } from "vitest";
 import { mount } from "@vue/test-utils";
 import { nextTick } from "vue";
 import DataViewer from "@/views/ManagementFish/components/DataViewer.vue";
+import { chooseOption } from "../helpers/select";
 
 const makeData = () => [
   { _id: "f1", fishName: "Cá trắm", fishWeights: Array.from({ length: 12 }, (_, i) => i + 1) },
@@ -28,7 +29,7 @@ test("đổi số dòng mỗi trang thì về trang 1", async () => {
   wrapper.vm.initDataTable(makeData(), 12);
   await nextTick();
   await wrapper.findAll(".page-btn")[1].trigger("click");
-  await wrapper.find(".items-per-page").setValue(10);
+  await chooseOption(wrapper, "#itemsPerPage", 10);
   expect(pageText(wrapper)).toBe("Trang 1 / 2");
 });
 

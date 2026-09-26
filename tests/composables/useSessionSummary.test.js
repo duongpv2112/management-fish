@@ -75,11 +75,10 @@ test("savePrice gửi toàn bộ bảng giá rồi tải lại", async () => {
   expect(WeighSessionAPI.getSessionSummary).toHaveBeenCalledTimes(2);
 });
 
-test("changeCurrency: bấm Hủy → không gọi API, ô chọn trở về loại cũ", async () => {
+test("changeCurrency: bấm Hủy → không gọi API, vẫn là loại cũ", async () => {
   vi.spyOn(window, "confirm").mockReturnValue(false);
   const { state } = await mountComposable();
-  const select = { value: "USD" };
-  await state.changeCurrency({ target: select });
+  await state.changeCurrency("USD");
   expect(WeighSessionAPI.updateSessionCurrency).not.toHaveBeenCalled();
-  expect(select.value).toBe("VND");
+  expect(state.currency.value).toBe("VND");
 });

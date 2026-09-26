@@ -10,6 +10,7 @@ import WeighSessionAPI from "@/services/weighSessionAPI";
 import PriceCards from "@/views/ManagementFish/components/PriceCards.vue";
 import StatisticData from "@/views/ManagementFish/components/StatisticData.vue";
 import SummaryPrintTable from "@/views/ManagementFish/components/SummaryPrintTable.vue";
+import { chooseOption } from "../helpers/select";
 
 const summary = () => ({
   session: { _id: "s1", sessionName: "Phiên 26/09/2026", createdAt: "2026-09-26T01:00:00.000Z", currency: "VND" },
@@ -75,7 +76,7 @@ test("đổi loại tiền khi đã có giá → hỏi xác nhận rồi gọi A
   const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
   vi.mocked(WeighSessionAPI.updateSessionCurrency).mockResolvedValue({ success: true });
   const wrapper = await mountCards();
-  await wrapper.find("#currencySelectMobile").setValue("USD");
+  await chooseOption(wrapper, "#currencySelectMobile", "USD");
   await flushPromises();
   expect(confirmSpy).toHaveBeenCalledWith("Đổi loại tiền sẽ xóa đơn giá đã nhập của phiên này. Tiếp tục?");
   expect(WeighSessionAPI.updateSessionCurrency).toHaveBeenCalledWith("s1", "USD");

@@ -6,9 +6,13 @@
 
       <div class="price-cards__currency" v-if="summary">
         <label for="currencySelectMobile">Loại tiền</label>
-        <select id="currencySelectMobile" :value="currency" :disabled="isSaving" @change="changeCurrency($event)">
-          <option v-for="(item, code) in CURRENCIES" :key="code" :value="code">{{ item.label }}</option>
-        </select>
+        <CPSelect
+          idControl="currencySelectMobile"
+          :modelValue="currency"
+          :options="CURRENCY_OPTIONS"
+          :disabled="isSaving"
+          @change="changeCurrency"
+        />
       </div>
 
       <template v-if="summary">
@@ -65,7 +69,8 @@ import { ref, toRef } from "vue";
 
 import StatisticData from "./StatisticData.vue";
 import SummaryPrintTable from "./SummaryPrintTable.vue";
-import { CURRENCIES } from "@/common/currency";
+import CPSelect from "@/components/SelectComponent.vue";
+import { CURRENCY_OPTIONS } from "@/common/currency";
 import { useSessionSummary } from "@/composables/useSessionSummary";
 
 // Tab "Tiền" trên điện thoại: mỗi loại cá một thẻ, ô giá to; logic dùng chung với PriceSummary
@@ -128,15 +133,6 @@ const printSummary = () => {
     gap: 8px;
     font-size: 15px;
     font-weight: 600;
-
-    select {
-      min-height: 44px;
-      padding: 0 10px;
-      border: 2px solid $color-border;
-      border-radius: 8px;
-      background-color: $color-card-background;
-      font-size: 16px;
-    }
   }
 
   .price-cards__total {

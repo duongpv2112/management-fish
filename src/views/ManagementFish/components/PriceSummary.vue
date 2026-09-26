@@ -6,14 +6,13 @@
 
       <div class="price-summary__currency no-print" v-if="summary">
         <label for="currencySelect">Loại tiền</label>
-        <select
-          id="currencySelect"
-          :value="currency"
+        <CPSelect
+          idControl="currencySelect"
+          :modelValue="currency"
+          :options="CURRENCY_OPTIONS"
           :disabled="isSaving"
-          @change="changeCurrency($event)"
-        >
-          <option v-for="(item, code) in CURRENCIES" :key="code" :value="code">{{ item.label }}</option>
-        </select>
+          @change="changeCurrency"
+        />
       </div>
 
       <!-- Vùng in phiếu: khi in chỉ in phần này -->
@@ -97,7 +96,8 @@ import { toRef } from "vue";
 
 import CPButton from "@/components/ButtonComponent.vue";
 import { common } from "@/common/common";
-import { CURRENCIES } from "@/common/currency";
+import CPSelect from "@/components/SelectComponent.vue";
+import { CURRENCY_OPTIONS } from "@/common/currency";
 import { useSessionSummary } from "@/composables/useSessionSummary";
 
 const props = defineProps({
@@ -219,18 +219,6 @@ const printSummary = () => {
 
     label {
       font-weight: 600;
-    }
-
-    select {
-      padding: 4px 8px;
-      border: 1px solid $color-border;
-      border-radius: 4px;
-      background-color: $color-card-background;
-
-      &:focus {
-        outline: none;
-        border-color: $color-primary;
-      }
     }
   }
 

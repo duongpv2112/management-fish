@@ -7,11 +7,7 @@
         placeholder="Tìm kiếm theo loại cá..."
         class="search-input"
       />
-      <select v-model="itemsPerPage" class="items-per-page">
-        <option :value="5">5 bản ghi</option>
-        <option :value="10">10 bản ghi</option>
-        <option :value="20">20 bản ghi</option>
-      </select>
+      <CPSelect v-model="itemsPerPage" idControl="itemsPerPage" class="items-per-page" :options="pageSizeOptions" />
     </div>
     <div
       v-if="!isLoading && isShowTable && numberRowsOfTable > 0"
@@ -77,6 +73,8 @@
 <script setup>
 import { ref, computed, watch } from "vue";
 
+import CPSelect from "@/components/SelectComponent.vue";
+
 const props = defineProps({
   isLoading: {
     type: Boolean,
@@ -96,6 +94,7 @@ const dataOfTable = ref([]);
 const numberRowsOfTable = ref(0);
 const searchTerm = ref("");
 const itemsPerPage = ref(5);
+const pageSizeOptions = [5, 10, 20].map((value) => ({ value, label: `${value} bản ghi` }));
 const currentPage = ref(1);
 
 const initDataTable = (data, numberRows) => {
@@ -249,19 +248,6 @@ const paginatedRows = computed(() => {
         outline: none;
         border-color: $color-primary;
         box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.2);
-      }
-    }
-
-    .items-per-page {
-      padding: 8px 12px;
-      border: 1px solid $color-border;
-      border-radius: 4px;
-      font-size: 14px;
-      cursor: pointer;
-
-      &:focus {
-        outline: none;
-        border-color: $color-primary;
       }
     }
   }
