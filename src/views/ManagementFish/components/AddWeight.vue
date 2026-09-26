@@ -1,6 +1,11 @@
 <template>
   <div class="add-weight-container">
     <h1>Thêm cân nặng</h1>
+    <VoiceInput
+      :fishTypes="lstDataFishType"
+      :basketTypes="lstDataBasketType"
+      @parsed="handleVoiceParsed"
+    />
     <div class="add-weight-form">
       <CPCombobox
         class="flex-1"
@@ -60,6 +65,7 @@ import { onMounted, ref } from "vue";
 import CPCombobox from "@/components/ComboboxComponent.vue";
 import CPInput from "@/components/InputComponent.vue";
 import CPButton from "@/components/ButtonComponent.vue";
+import VoiceInput from "./VoiceInput.vue";
 
 import FishTypeAPI from "@/services/fishTypeAPI";
 import BasketTypeAPI from "@/services/basketTypeAPI";
@@ -112,9 +118,9 @@ const getDataBasketType = async () => {
   }
 };
 
-const resetForm = () => {
-  fishTypeValue.value = null;
-  basketTypeValue.value = null;
+// Sau khi lưu chỉ xóa số cân, giữ loại cá và loại giỏ vì người cân thường cân
+// nhiều giỏ cùng một loại cá liên tiếp
+const resetWeight = () => {
   fishWeightValue.value = null;
 };
 
@@ -161,7 +167,7 @@ const save = async () => {
   try {
     let result = await FishWeightAPI.saveFishWeight(dataSaveFishWeight);
     successMessage.value = "Lưu số cân thành công!";
-    resetForm();
+    resetWeight();
     // Chỉ báo cho component cha tải lại dữ liệu sau khi đã lưu thành công
     emit("weightAdded", result?.data);
     return true;
@@ -172,6 +178,37 @@ const save = async () => {
   } finally {
     isLoading.value = false;
   }
+};
+
+/**
+ * Xử lý một câu nói đã phân tích: điền các trường nghe được, rồi thực hiện lệnh "lưu"/"hủy".
+ * Loại cá và loại giỏ tự "dính" giữa các lần nói vì form không xóa hai trường này.
+ */
+const handleVoiceParsed = async ({ fishTypeId, basketTypeId, weight, command }) => {
+  if (fishTypeId) fishTypeValue.value = fishTypeId;
+  if (basketTypeId) basketTypeValue.value = basketTypeId;
+  if (weight !== null && weight !== undefined) fishWeightValue.value = String(weight);
+
+  if (command === "cancel") {
+    resetWeight();
+    return;
+  }
+  if (command !== "save") return;
+
+  // Không lưu nếu thiếu dữ liệu: báo cụ thể thiếu gì
+  if (!fishTypeValue.value) {
+    errorMessage.value = "Chưa chọn loại cá";
+    return;
+  }
+  if (!basketTypeValue.value) {
+    errorMessage.value = "Chưa chọn loại giỏ";
+    return;
+  }
+  if (!common.parseDecimal(fishWeightValue.value)) {
+    errorMessage.value = "Chưa có số cân";
+    return;
+  }
+  await save();
 };
 
 defineExpose({ setFormValues, save });
