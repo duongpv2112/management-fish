@@ -7,3 +7,11 @@ $color-border: #e0e0e0; // Màu viền xám nhạt
 $color-hover: #e8f5e9; // Màu hover xanh nhạt
 $color-error: #d32f2f; // Màu lỗi đỏ
 $color-success: #388e3c; // Màu thành công xanh
+$color-border-strong: #c8d3cb; // Viền ô bấm/ô nhập (đậm hơn viền thẻ)
+$color-focus-ring: rgba(46, 125, 50, 0.18); // Vòng sáng khi focus/đang mở
+
+// Bo góc dùng chung: chip nhỏ, ô bấm/ô nhập, thẻ/khung, bảng trượt đáy
+$radius-sm: 6px;
+$radius-md: 10px;
+$radius-lg: 12px;
+$radius-xl: 16px;

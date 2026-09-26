@@ -10,7 +10,7 @@
           idControl="editFishType"
           labelControl="Loại cá"
           :modelValue="fishTypeValue"
-          height="36px"
+          height="40px"
           :lstData="fishTypes"
           dataField="_id"
           dataFieldText="fishName"
@@ -20,7 +20,7 @@
           idControl="editBasketType"
           labelControl="Loại giỏ"
           :modelValue="basketTypeValue"
-          height="36px"
+          height="40px"
           :lstData="basketTypes"
           dataField="_id"
           dataFieldText="basketName"
@@ -28,20 +28,27 @@
         />
         <CPInput
           idControl="editFishWeight"
-          labelControl="Số cân cá"
+          labelControl="Số cân (gồm giỏ)"
           :modelValue="fishWeightValue"
-          height="36px"
+          height="40px"
           :typeInput="1"
           @update="($event) => (fishWeightValue = $event)"
           @enter="save"
         />
+        <div
+          v-if="netPreview"
+          class="net-preview"
+          :class="{ 'net-preview--error': netPreview.isError }"
+        >
+          {{ netPreview.text }}
+        </div>
       </div>
 
       <div class="weight-edit-actions">
-        <CPButton class="btn-delete" textButton="Xóa" :disabled="isSaving" @click="remove" />
+        <CPButton class="btn-delete" typeButton="danger" textButton="Xóa" :disabled="isSaving" @click="remove" />
         <div class="weight-edit-actions__right">
           <CPButton class="btn-close" textButton="Đóng" @click="emit('close')" />
-          <CPButton class="btn-save" textButton="Lưu" :disabled="isSaving" @click="save" />
+          <CPButton class="btn-save" typeButton="primary" textButton="Lưu" :disabled="isSaving" @click="save" />
         </div>
       </div>
     </div>
@@ -49,7 +56,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
 
 import CPCombobox from "@/components/ComboboxComponent.vue";
 import CPInput from "@/components/InputComponent.vue";
@@ -80,6 +87,28 @@ const basketTypeValue = ref(props.item.basketType ?? null);
 const fishWeightValue = ref(String(props.item.fishWeight ?? ""));
 const errorMessage = ref("");
 const isSaving = ref(false);
+
+const round2 = (value) => Math.round(value * 100) / 100;
+const formatKg = (value) => String(round2(value)).replace(".", ",");
+
+// Trọng lượng giỏ server sẽ trừ: giữ giỏ cũ thì dùng số đã lưu lúc cân, đổi giỏ thì lấy trọng lượng giỏ hiện tại
+const basketWeight = computed(() => {
+  if (basketTypeValue.value === (props.item.basketType ?? null) && props.item.basketWeightSnapshot != null) {
+    return props.item.basketWeightSnapshot;
+  }
+  return props.basketTypes.find((basket) => basket._id === basketTypeValue.value)?.basketWeight ?? 0;
+});
+
+// Bảng hiện số cân thực, còn ô nhập là số cân gồm giỏ: hiện ngay kết quả sau khi trừ giỏ để tránh nhầm
+const netPreview = computed(() => {
+  const fishWeight = common.parseDecimal(fishWeightValue.value);
+  if (!fishWeight || fishWeight <= 0) return null;
+  const net = round2(fishWeight - basketWeight.value);
+  if (net <= 0) {
+    return { isError: true, text: `Số cân phải lớn hơn trọng lượng giỏ (${formatKg(basketWeight.value)} kg)` };
+  }
+  return { isError: false, text: `Còn ${formatKg(net)} kg sau khi trừ giỏ ${formatKg(basketWeight.value)} kg` };
+});
 
 const save = async () => {
   errorMessage.value = "";
@@ -144,7 +173,7 @@ const remove = async () => {
     width: 100%;
     max-width: 420px;
     background-color: $color-card-background;
-    border-radius: 8px;
+    border-radius: $radius-lg;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
     padding: 20px;
 
@@ -160,7 +189,7 @@ const remove = async () => {
       margin-bottom: 16px;
       font-size: 14px;
       padding: 8px;
-      border-radius: 4px;
+      border-radius: $radius-md;
       text-align: center;
       color: $color-error;
       background-color: lighten($color-error, 40%);
@@ -170,6 +199,16 @@ const remove = async () => {
       display: flex;
       flex-direction: column;
       gap: 16px;
+    }
+
+    .net-preview {
+      margin-top: -8px;
+      font-size: 13px;
+      color: $color-primary;
+
+      &.net-preview--error {
+        color: $color-error;
+      }
     }
 
     .weight-edit-actions {
