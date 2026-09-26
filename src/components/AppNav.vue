@@ -29,6 +29,7 @@ const logout = () => {
 const links = [
   { name: "weigh", text: "Cân cá" },
   { name: "catalog", text: "Danh mục" },
+  { name: "log", text: "Nhật ký" },
 ];
 </script>
 

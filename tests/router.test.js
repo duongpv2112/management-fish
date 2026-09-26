@@ -35,7 +35,7 @@ test("điều hướng giữa trang Cân cá và Danh mục", async () => {
   expect(wrapper.text()).toContain("Quản lý cân cá nhà Đặng Ánh");
 
   const links = wrapper.findAll("nav a");
-  expect(links.map((a) => a.text())).toEqual(["Cân cá", "Danh mục"]);
+  expect(links.map((a) => a.text())).toEqual(["Cân cá", "Danh mục", "Nhật ký"]);
 });
 
 test("nút Đăng xuất xóa token và về trang đăng nhập; trang đăng nhập không hiện thanh điều hướng", async () => {
