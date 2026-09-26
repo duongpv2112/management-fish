@@ -41,12 +41,15 @@
         @update="($event) => (fishWeightValue = $event)"
       />
     </div>
+    <div class="error-message" v-if="errorMessage">{{ errorMessage }}</div>
+    <div class="success-message" v-if="successMessage">{{ successMessage }}</div>
     <CPButton
       class="btn-add-weight"
-      idControl="fishWeight"
+      idControl="btnSaveFishWeight"
       height="36px"
       textButton="Lưu số cân"
-      @click="saveFishWeight"
+      :disabled="isLoading"
+      @click="save"
     />
   </div>
 </template>
@@ -61,6 +64,7 @@ import CPButton from "@/components/ButtonComponent.vue";
 import FishTypeAPI from "@/services/fishTypeAPI";
 import BasketTypeAPI from "@/services/basketTypeAPI";
 import FishWeightAPI from "@/services/fishWeightAPI";
+import { common } from "@/common/common";
 
 const emit = defineEmits(['weightAdded']);
 
@@ -142,57 +146,69 @@ const getDataBasketType = async () => {
   }
 };
 
-const saveFishWeight = async () => {
+const resetForm = () => {
+  fishTypeValue.value = null;
+  basketTypeValue.value = null;
+  fishWeightValue.value = null;
+};
+
+// Điền giá trị vào form từ bên ngoài (ví dụ: nhập bằng giọng nói)
+const setFormValues = ({ fishType, basketType, fishWeight } = {}) => {
+  if (fishType !== undefined) fishTypeValue.value = fishType;
+  if (basketType !== undefined) basketTypeValue.value = basketType;
+  if (fishWeight !== undefined) {
+    fishWeightValue.value = fishWeight === null ? null : String(fishWeight);
+  }
+};
+
+/**
+ * Validate → gọi API → thành công thì reset form và emit weightAdded,
+ * thất bại thì giữ nguyên dữ liệu trên form để người dùng thử lại
+ * @returns {Promise<boolean>} true nếu lưu thành công
+ */
+const save = async () => {
   errorMessage.value = "";
   successMessage.value = "";
-  
+
   // Validate input
   if (!fishTypeValue.value) {
     errorMessage.value = "Vui lòng chọn loại cá.";
-    return;
+    return false;
   }
   if (!basketTypeValue.value) {
     errorMessage.value = "Vui lòng chọn loại giỏ.";
-    return;
+    return false;
   }
-  if (!fishWeightValue.value || fishWeightValue.value <= 0) {
+  const fishWeight = common.parseDecimal(fishWeightValue.value);
+  if (!fishWeight || fishWeight <= 0) {
     errorMessage.value = "Số cân cá phải là số dương.";
-    return;
+    return false;
   }
 
   let dataSaveFishWeight = {
     fishType: fishTypeValue.value,
-    fishWeight: parseFloat(fishWeightValue.value),
+    fishWeight: fishWeight,
     basketType: basketTypeValue.value,
   };
 
-  // Đặt lại form trước khi lưu
-  fishTypeValue.value = null;
-  basketTypeValue.value = null;
-  fishWeightValue.value = null;
-  
-  // Phát sự kiện để thông báo cho component cha bắt đầu loading danh sách cân
-  emit('weightAdded');
-  
   isLoading.value = true;
   try {
     let result = await FishWeightAPI.saveFishWeight(dataSaveFishWeight);
     successMessage.value = "Lưu số cân thành công!";
-    // Đảm bảo form được đặt lại sau khi lưu thành công
-    fishTypeValue.value = null;
-    basketTypeValue.value = null;
-    fishWeightValue.value = null;
+    resetForm();
+    // Chỉ báo cho component cha tải lại dữ liệu sau khi đã lưu thành công
+    emit("weightAdded", result?.data);
+    return true;
   } catch (error) {
     errorMessage.value = "Lưu số cân thất bại, vui lòng thử lại sau.";
     console.error("Lỗi khi lưu số cân cá:", error);
-    // Đặt lại form ngay cả khi có lỗi để đảm bảo dữ liệu không còn trên giao diện
-    fishTypeValue.value = null;
-    basketTypeValue.value = null;
-    fishWeightValue.value = null;
+    return false;
   } finally {
     isLoading.value = false;
   }
 };
+
+defineExpose({ setFormValues, save });
 
 onMounted(async () => {
   await initDateForm();
