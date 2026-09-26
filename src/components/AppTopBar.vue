@@ -77,7 +77,7 @@ const logout = () => {
   }
 
   .app-top-bar__action {
-    min-height: 40px;
+    min-height: 44px;
     max-width: 60%;
     padding: 0 12px;
     border: none;

@@ -147,12 +147,20 @@ defineExpose({ isListening, start, stop, announce });
     font-size: 13px;
     color: $color-text-primary;
 
+    // Cả nhãn là vùng chạm (≥ 44px) để bật/tắt đọc xác nhận dễ dàng trên điện thoại
     .voice-input__readback {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 8px;
+      min-height: 44px;
+      font-size: 15px;
       cursor: pointer;
       user-select: none;
+
+      input {
+        width: 22px;
+        height: 22px;
+      }
     }
 
     .voice-input__interim {
