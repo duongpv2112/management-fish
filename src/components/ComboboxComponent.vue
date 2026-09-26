@@ -393,14 +393,17 @@ const keyPressCode = ref({
     user-select: none;
     position: relative;
     display: flex;
-    border: 1px solid #dfe1e6;
-    border-radius: 5px;
+    border: 1px solid $color-border-strong;
+    background-color: $color-card-background;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    border-radius: $radius-md;
     padding: 1px 0 1px 1px;
     width: v-bind(width);
     height: v-bind(height);
 
     &.cp-combobox--focus {
-      border-color: #0065ff !important;
+      border-color: $color-primary !important;
+      box-shadow: 0 0 0 3px $color-focus-ring;
     }
 
     &.cp-combobox--disabled {
@@ -409,11 +412,11 @@ const keyPressCode = ref({
     }
 
     &.cp-combobox--error {
-      border-color: #dc3545;
+      border-color: $color-error;
     }
 
     &:hover:not(.cp-combobox--disabled) {
-      border-color: #6b778c;
+      border-color: $color-primary;
     }
 
     .cp-combobox__input {
@@ -465,7 +468,7 @@ const keyPressCode = ref({
       .select-content {
         display: flex;
         flex-direction: column;
-        border-radius: 6px;
+        border-radius: $radius-md;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
         background-color: #fff;
 
@@ -541,6 +544,26 @@ const keyPressCode = ref({
   }
   to {
     opacity: 1;
+  }
+}
+
+// Điện thoại: ô chọn đủ cao để chạm, chữ 16px để iPhone không tự phóng to
+@media (max-width: 899.98px) {
+  .cp-combobox {
+    .cp-combobox__control {
+      min-height: 44px;
+    }
+
+    .combobox-input {
+      font-size: 16px;
+    }
+
+    .select-item {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      font-size: 16px;
+    }
   }
 }
 </style>

@@ -95,3 +95,49 @@ test("nút Đóng emit close", async () => {
   await wrapper.find(".btn-close button").trigger("click");
   expect(wrapper.emitted().close).toHaveLength(1);
 });
+
+const mountWith = async (overrides = {}) => {
+  const wrapper = mount(WeightEditDialog, {
+    props: {
+      ...props,
+      basketTypes: [...props.basketTypes, { _id: "b2", basketName: "Giỏ nhỏ", basketWeight: 1 }],
+      ...overrides,
+    },
+  });
+  await flushPromises();
+  return wrapper;
+};
+
+test("nhãn ghi rõ số cân gồm cả giỏ", async () => {
+  const wrapper = await mountDialog();
+  expect(wrapper.text()).toContain("Số cân (gồm giỏ)");
+});
+
+test("xem trước số cân thực: dùng trọng lượng giỏ đã lưu của lần cân", async () => {
+  const wrapper = await mountWith({ item: { ...props.item, basketWeightSnapshot: 3 } });
+  expect(wrapper.find(".net-preview").text()).toBe("Còn 22 kg sau khi trừ giỏ 3 kg");
+
+  await wrapper.find("#editFishWeight").setValue("26,5");
+  expect(wrapper.find(".net-preview").text()).toBe("Còn 23,5 kg sau khi trừ giỏ 3 kg");
+});
+
+test("đổi sang giỏ khác → xem trước theo trọng lượng giỏ mới", async () => {
+  const wrapper = await mountWith({ item: { ...props.item, basketWeightSnapshot: 3 } });
+  wrapper.findAllComponents({ name: "ComboboxComponent" })[1].vm.$emit("update", "b2");
+  await flushPromises();
+  expect(wrapper.find(".net-preview").text()).toBe("Còn 24 kg sau khi trừ giỏ 1 kg");
+});
+
+test("số cân không lớn hơn giỏ → cảnh báo trong phần xem trước", async () => {
+  const wrapper = await mountWith();
+  await wrapper.find("#editFishWeight").setValue("1,5");
+  const preview = wrapper.find(".net-preview");
+  expect(preview.text()).toBe("Số cân phải lớn hơn trọng lượng giỏ (2 kg)");
+  expect(preview.classes()).toContain("net-preview--error");
+});
+
+test("số cân trống → không hiện xem trước", async () => {
+  const wrapper = await mountWith();
+  await wrapper.find("#editFishWeight").setValue("");
+  expect(wrapper.find(".net-preview").exists()).toBe(false);
+});

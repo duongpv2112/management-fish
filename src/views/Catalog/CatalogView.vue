@@ -34,4 +34,15 @@ import BasketTypeManager from "./components/BasketTypeManager.vue";
     align-items: flex-start;
   }
 }
+
+@media (max-width: 899.98px) {
+  .catalog {
+    padding: 0 12px 20px;
+
+    .catalog-title {
+      font-size: 20px;
+      padding: 12px 0;
+    }
+  }
+}
 </style>

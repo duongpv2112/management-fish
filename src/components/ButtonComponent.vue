@@ -69,22 +69,18 @@ const handleClick = () => {
 };
 </script>
 <style lang="scss" scoped>
+// 4 kiểu nút dùng chung: primary (xanh đặc, hành động chính), default/secondary (viền xanh),
+// danger (viền đỏ, thao tác xóa/kết thúc), ghost (chỉ chữ). Cùng bo góc, cùng chiều cao.
 .cp-button {
   .cp-button__content {
     user-select: none;
     display: flex;
-    border-radius: 6px;
+    border-radius: $radius-md;
     width: v-bind(width);
     height: v-bind(height);
+    min-height: 40px;
     overflow: hidden;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     outline: none;
-
-    &.cp-button--disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
 
     &.cp-button--loading {
       cursor: not-allowed;
@@ -93,20 +89,21 @@ const handleClick = () => {
     .button-control {
       cursor: pointer;
       flex: 1;
-      border: none;
+      border: 1px solid transparent;
+      border-radius: $radius-md;
       outline: none;
-      padding: 10px 20px;
+      padding: 0 16px;
       background-color: transparent;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 8px;
       font-weight: 600;
       font-size: 14px;
-      transition: all 0.2s ease;
+      transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 
-      &:hover:not(:disabled) {
-        outline: none;
+      &:focus-visible {
+        box-shadow: 0 0 0 3px $color-focus-ring;
       }
 
       &:active:not(:disabled) {
@@ -115,61 +112,55 @@ const handleClick = () => {
 
       &:disabled {
         cursor: not-allowed;
-      }
-
-      &.btn-default {
-        background-color: #f8f9fa;
-        color: #343a40;
-        border: 1px solid #ced4da;
-
-        &:hover:not(:disabled) {
-          background-color: #e9ecef;
-        }
-
-        &:active:not(:disabled) {
-          background-color: #dee2e6;
-        }
+        background-color: $color-background;
+        border-color: $color-border;
+        color: #9aa5a0;
       }
 
       &.btn-primary {
-        background-color: #007bff;
-        color: #fff;
-        border: 1px solid #007bff;
-        
+        background-color: $color-primary;
+        border-color: $color-primary;
+        color: $color-card-background;
+
         &:hover:not(:disabled) {
-          background-color: #0069d9;
+          background-color: darken($color-primary, 6%);
         }
-        
-        &:active:not(:disabled) {
-          background-color: #0062cc;
+
+        &:disabled {
+          background-color: #dfe6e0;
+          border-color: #dfe6e0;
+          color: #7d8c81;
         }
       }
 
+      &.btn-default,
       &.btn-secondary {
-        background-color: #6c757d;
-        color: #fff;
-        border: 1px solid #6c757d;
-        
+        background-color: $color-card-background;
+        border-color: $color-border-strong;
+        color: $color-primary;
+
         &:hover:not(:disabled) {
-          background-color: #5a6268;
-        }
-        
-        &:active:not(:disabled) {
-          background-color: #545b62;
+          background-color: $color-hover;
+          border-color: $color-primary;
         }
       }
 
       &.btn-danger {
-        background-color: #dc3545;
-        color: #fff;
-        border: 1px solid #dc3545;
-        
+        background-color: $color-card-background;
+        border-color: lighten($color-error, 32%);
+        color: $color-error;
+
         &:hover:not(:disabled) {
-          background-color: #c82333;
+          background-color: lighten($color-error, 44%);
+          border-color: $color-error;
         }
-        
-        &:active:not(:disabled) {
-          background-color: #bd2130;
+      }
+
+      &.btn-ghost {
+        color: $color-primary;
+
+        &:hover:not(:disabled) {
+          background-color: $color-hover;
         }
       }
 
@@ -179,7 +170,7 @@ const handleClick = () => {
         height: 16px;
         border: 2px solid rgba(255, 255, 255, 0.3);
         border-radius: 50%;
-        border-top-color: #fff;
+        border-top-color: currentColor;
         animation: spin 1s ease-in-out infinite;
       }
     }
@@ -188,5 +179,18 @@ const handleClick = () => {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+// Điện thoại: nút đủ cao để chạm
+@media (max-width: 899.98px) {
+  .cp-button {
+    .cp-button__content {
+      min-height: 44px;
+    }
+
+    .button-control {
+      font-size: 16px;
+    }
+  }
 }
 </style>
