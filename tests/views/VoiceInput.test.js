@@ -51,9 +51,15 @@ const say = async (text) => {
   await flushPromises();
 };
 
+// Lưới ChoiceGrid: giá trị đang chọn là nút aria-pressed="true"
+const selectedText = (wrapper, id) => {
+  const node = wrapper.find(`#${id} [aria-pressed="true"] .choice-grid__text`);
+  return node.exists() ? node.text() : "";
+};
+
 const formValues = (wrapper) => ({
-  fishType: wrapper.find("#fishType").element.value,
-  basketType: wrapper.find("#basketType").element.value,
+  fishType: selectedText(wrapper, "fishType"),
+  basketType: selectedText(wrapper, "basketType"),
   fishWeight: wrapper.find("#fishWeight").element.value,
 });
 

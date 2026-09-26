@@ -1,0 +1,35 @@
+// Phiếu in dùng chung cho bảng tiền (máy tính) và thẻ tiền (điện thoại):
+// khi in chỉ in vùng .price-summary__print-area (tên phiên, người mua, ngày, bảng tổng hợp)
+.screen-hidden {
+  display: none;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .price-summary__print-area,
+  .price-summary__print-area * {
+    visibility: visible;
+  }
+
+  .price-summary__print-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+
+  .screen-hidden {
+    display: block !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: inline !important;
+  }
+}
