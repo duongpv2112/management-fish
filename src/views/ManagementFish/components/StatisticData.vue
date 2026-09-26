@@ -30,6 +30,19 @@ const destroyChart = () => {
   chart = null;
 };
 
+const hasNetWeight = () =>
+  props.fishData.some((item) =>
+    item.fishWeightItems?.some((weight) => typeof weight.netWeight === "number")
+  );
+
+// Tổng trọng lượng thực (đã trừ giỏ) nếu có, không thì tổng số cân
+const totalWeight = (item) => {
+  const total = item.fishWeightItems
+    ? item.fishWeightItems.reduce((sum, weight) => sum + (weight.netWeight ?? weight.fishWeight), 0)
+    : item.fishWeights.reduce((sum, weight) => sum + weight, 0);
+  return Math.round(total * 100) / 100;
+};
+
 const renderChart = async () => {
   destroyChart();
   if (!hasData.value) return;
@@ -42,10 +55,8 @@ const renderChart = async () => {
     data: {
       labels: props.fishData.map(item => item.fishName),
       datasets: [{
-        label: 'Tổng cân nặng (kg)',
-        data: props.fishData.map(item => {
-          return item.fishWeights.reduce((sum, weight) => sum + weight, 0);
-        }),
+        label: hasNetWeight() ? 'Trọng lượng thực (kg)' : 'Tổng cân nặng (kg)',
+        data: props.fishData.map(totalWeight),
         backgroundColor: 'rgba(46, 125, 50, 0.6)',
         borderColor: 'rgba(46, 125, 50, 1)',
         borderWidth: 1

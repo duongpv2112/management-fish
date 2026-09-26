@@ -90,3 +90,24 @@ describe("chọn ô để sửa", () => {
     expect(wrapper.emitted().editItem).toBeUndefined();
   });
 });
+
+test("ô hiển thị trọng lượng thực, tooltip 'Tổng x − giỏ y'", async () => {
+  const wrapper = mount(DataViewer);
+  wrapper.vm.initDataTable(
+    [
+      {
+        _id: "f1",
+        fishName: "Cá trắm",
+        fishWeights: [25.5],
+        fishWeightItems: [
+          { _id: "w1", fishWeight: 25.5, netWeight: 23.5, basketWeightSnapshot: 2, basketType: "b1" },
+        ],
+      },
+    ],
+    1
+  );
+  await nextTick();
+  const cell = wrapper.find("tbody td");
+  expect(cell.text()).toBe("23.5");
+  expect(cell.attributes("title")).toBe("Tổng 25.5 − giỏ 2");
+});

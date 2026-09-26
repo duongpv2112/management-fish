@@ -191,3 +191,12 @@ describe("đọc xác nhận", () => {
     expect(speakMock).not.toHaveBeenCalled();
   });
 });
+
+test("server từ chối (số cân <= giỏ) → hiện đúng message của server", async () => {
+  vi.mocked(FishWeightAPI.saveFishWeight).mockRejectedValue(
+    new Error("Số cân phải lớn hơn trọng lượng giỏ (2 kg)!")
+  );
+  const wrapper = await mountForm();
+  await say("trắm giỏ to 2 lưu");
+  expect(wrapper.find(".error-message").text()).toBe("Số cân phải lớn hơn trọng lượng giỏ (2 kg)!");
+});

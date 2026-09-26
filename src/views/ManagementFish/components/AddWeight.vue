@@ -174,7 +174,8 @@ const save = async () => {
     emit("weightAdded", result?.data);
     return true;
   } catch (error) {
-    errorMessage.value = "Lưu số cân thất bại, vui lòng thử lại sau.";
+    // Hiện lý do cụ thể từ server (ví dụ "Số cân phải lớn hơn trọng lượng giỏ (2 kg)!")
+    errorMessage.value = error?.message || "Lưu số cân thất bại, vui lòng thử lại sau.";
     console.error("Lỗi khi lưu số cân cá:", error);
     return false;
   } finally {

@@ -56,7 +56,7 @@ test("lưu thành công: gọi API với số thập phân, emit sau khi lưu, c
   expect(wrapper.text()).toContain("Lưu số cân thành công!");
 });
 
-test("lưu thất bại: không emit, giữ nguyên giá trị đã nhập", async () => {
+test("lưu thất bại: không emit, giữ nguyên giá trị đã nhập, hiện message server", async () => {
   vi.mocked(FishWeightAPI.saveFishWeight).mockRejectedValue(new Error("Thêm cân cá không thành công!"));
   const wrapper = await mountForm();
   await fillForm(wrapper, "25,5");
@@ -67,7 +67,7 @@ test("lưu thất bại: không emit, giữ nguyên giá trị đã nhập", asy
   expect(ok).toBe(false);
   expect(wrapper.emitted().weightAdded).toBeUndefined();
   expect(formValues(wrapper)).toEqual({ fishType: "Cá trắm", basketType: "Giỏ to", fishWeight: "25,5" });
-  expect(wrapper.text()).toContain("Lưu số cân thất bại, vui lòng thử lại sau.");
+  expect(wrapper.find(".error-message").text()).toBe("Thêm cân cá không thành công!");
 });
 
 test("thiếu loại cá: không gọi API", async () => {

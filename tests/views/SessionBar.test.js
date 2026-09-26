@@ -134,3 +134,27 @@ describe("ManagementFishViews với phiên cân", () => {
     expect(wrapper.findComponent(AddWeight).exists()).toBe(true);
   });
 });
+
+describe("tab Tiền / Biểu đồ", () => {
+  test("mặc định hiện bảng tiền của phiên đang chọn; chuyển tab thì hiện biểu đồ", async () => {
+    const { default: PriceSummary } = await import("@/views/ManagementFish/components/PriceSummary.vue");
+    const { default: StatisticData } = await import("@/views/ManagementFish/components/StatisticData.vue");
+    const wrapper = mount(ManagementFishViews);
+    await flushPromises();
+    expect(wrapper.findComponent(PriceSummary).props("sessionId")).toBe("s2");
+    expect(wrapper.findComponent(StatisticData).exists()).toBe(false);
+
+    await wrapper.find(".statistic-tabs__chart").trigger("click");
+    expect(wrapper.findComponent(StatisticData).exists()).toBe(true);
+    expect(wrapper.findComponent(PriceSummary).exists()).toBe(false);
+  });
+
+  test("thêm cân xong → bảng tiền tải lại", async () => {
+    const wrapper = mount(ManagementFishViews);
+    await flushPromises();
+    const before = vi.mocked(WeighSessionAPI.getSessionSummary).mock.calls.length;
+    wrapper.findComponent(AddWeight).vm.$emit("weightAdded", {});
+    await flushPromises();
+    expect(vi.mocked(WeighSessionAPI.getSessionSummary).mock.calls.length).toBe(before + 1);
+  });
+});

@@ -49,6 +49,7 @@ test("sau khi thêm cân: tải lại một lần và truyền dữ liệu xuố
   const wrapper = mount(ManagementFishViews);
   await flushPromises();
   expect(FishTypeAPI.getDataFish).toHaveBeenCalledTimes(1);
+  await wrapper.find(".statistic-tabs__chart").trigger("click");
   expect(wrapper.findComponent(StatisticData).props("fishData")).toEqual(data);
 
   wrapper.findComponent(AddWeight).vm.$emit("weightAdded", { _id: "w1" });

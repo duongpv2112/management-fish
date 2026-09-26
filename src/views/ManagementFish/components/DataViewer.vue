@@ -39,9 +39,10 @@
           <td
             v-for="(fishType, fishTypeIndex) in filteredData"
             :class="{ 'cell-editable': fishType.items[row - 1]?._id }"
+            :title="cellTitle(fishType.items[row - 1])"
             @click="handleClickCell(fishType, row)"
           >
-            {{ fishType.items[row - 1]?.fishWeight }}
+            {{ fishType.items[row - 1]?.netWeight ?? fishType.items[row - 1]?.fishWeight }}
           </td>
         </tr>
       </tbody>
@@ -108,6 +109,12 @@ const initDataTable = (data, numberRows) => {
 watch([searchTerm, itemsPerPage], () => {
   currentPage.value = 1;
 });
+
+// Ô hiển thị trọng lượng thực (đã trừ giỏ); rê chuột để xem số cân gốc và trọng lượng giỏ
+const cellTitle = (item) =>
+  item?.netWeight === undefined || item?.netWeight === null
+    ? undefined
+    : `Tổng ${item.fishWeight} − giỏ ${item.basketWeightSnapshot ?? 0}`;
 
 // Click vào ô có lần cân → báo component cha mở hộp thoại sửa/xóa
 const handleClickCell = (fishType, row) => {

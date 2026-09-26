@@ -24,7 +24,30 @@
         <AddWeight v-else @weightAdded="handleWeightAdded"></AddWeight>
       </div>
       <div class="statistic-data">
-        <StatisticData :fishData="fishData"></StatisticData>
+        <div class="statistic-tabs">
+          <button
+            type="button"
+            class="statistic-tabs__price"
+            :class="{ active: activeTab === 'price' }"
+            @click="activeTab = 'price'"
+          >
+            Tiền
+          </button>
+          <button
+            type="button"
+            class="statistic-tabs__chart"
+            :class="{ active: activeTab === 'chart' }"
+            @click="activeTab = 'chart'"
+          >
+            Biểu đồ
+          </button>
+        </div>
+        <PriceSummary
+          v-if="activeTab === 'price'"
+          :sessionId="selectedSessionId"
+          :refreshKey="summaryRefreshKey"
+        />
+        <StatisticData v-else :fishData="fishData"></StatisticData>
       </div>
     </div>
 
@@ -50,6 +73,7 @@ import SessionBar from "./components/SessionBar.vue";
 import DataViewer from "./components/DataViewer.vue";
 import AddWeight from "./components/AddWeight.vue";
 import StatisticData from "./components/StatisticData.vue";
+import PriceSummary from "./components/PriceSummary.vue";
 import WeightEditDialog from "./components/WeightEditDialog.vue";
 import BasketTypeAPI from "@/services/basketTypeAPI";
 
@@ -58,6 +82,10 @@ const isLoading = ref(false);
 
 const fishData = ref([]);
 const loadError = ref("");
+
+const activeTab = ref("price");
+// Tăng lên để bảng tiền tải lại sau khi thêm/sửa/xóa lần cân
+const summaryRefreshKey = ref(0);
 
 const sessions = ref([]);
 const selectedSessionId = ref(null);
@@ -124,6 +152,7 @@ const openEditDialog = async (item) => {
 
 const handleEditDone = async () => {
   editingItem.value = null;
+  summaryRefreshKey.value++;
   await loadData();
 };
 
@@ -140,6 +169,7 @@ const handleSessionChanged = async () => {
 
 const handleWeightAdded = async () => {
   if (!selectedSession.value) await loadSessions({ selectOpen: true });
+  summaryRefreshKey.value++;
   await loadData();
 };
 
@@ -225,6 +255,28 @@ onMounted(async () => {
 
     .statistic-data {
       flex: 1;
+
+      .statistic-tabs {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 12px;
+        border-bottom: 1px solid $color-border;
+
+        button {
+          padding: 8px 16px;
+          border: none;
+          border-bottom: 2px solid transparent;
+          background: transparent;
+          cursor: pointer;
+          font-weight: 600;
+          color: $color-text-primary;
+
+          &.active {
+            color: $color-primary;
+            border-bottom-color: $color-primary;
+          }
+        }
+      }
       background-color: $color-card-background;
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
