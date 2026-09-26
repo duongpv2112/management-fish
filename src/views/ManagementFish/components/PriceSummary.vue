@@ -250,32 +250,3 @@ const printSummary = () => {
   }
 }
 </style>
-
-<style lang="scss">
-// Khi in phiếu: chỉ in tên phiên, người mua, ngày và bảng tổng hợp
-@media print {
-  body * {
-    visibility: hidden;
-  }
-
-  .price-summary__print-area,
-  .price-summary__print-area * {
-    visibility: visible;
-  }
-
-  .price-summary__print-area {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-  }
-
-  .price-summary .no-print {
-    display: none !important;
-  }
-
-  .price-summary .print-only {
-    display: inline !important;
-  }
-}
-</style>

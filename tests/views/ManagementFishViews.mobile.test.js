@@ -26,6 +26,7 @@ import PriceSummary from "@/views/ManagementFish/components/PriceSummary.vue";
 import DataViewer from "@/views/ManagementFish/components/DataViewer.vue";
 import SessionSheet from "@/views/ManagementFish/components/SessionSheet.vue";
 import FishWeightCards from "@/views/ManagementFish/components/FishWeightCards.vue";
+import PriceCards from "@/views/ManagementFish/components/PriceCards.vue";
 import { topBarAction, clearTopBarAction } from "@/common/topBarAction";
 
 const openSession = { _id: "s2", sessionName: "Phiên 26/09/2026", status: "open", createdAt: "2026-09-26T01:00:00Z" };
@@ -69,10 +70,15 @@ test("điện thoại: mặc định tab Cân có form cân và thanh tab, chưa
   expect(wrapper.findComponent(PriceSummary).exists()).toBe(false);
 });
 
-test("?tab=tien → mở tab Tiền", async () => {
+test("?tab=tien → mở tab Tiền dạng thẻ (không dùng bảng tiền máy tính)", async () => {
+  const data = [{ _id: "f1", fishName: "Cá trắm", fishWeights: [20], fishWeightItems: [] }];
+  vi.mocked(FishTypeAPI.getDataFish).mockResolvedValue({ data });
   const { wrapper } = await mountAt("/?tab=tien");
   expect(wrapper.findComponent(MobileTabBar).props("modelValue")).toBe("tien");
-  expect(wrapper.findComponent(PriceSummary).exists()).toBe(true);
+  const cards = wrapper.findComponent(PriceCards);
+  expect(cards.exists()).toBe(true);
+  expect(cards.props()).toMatchObject({ sessionId: "s2", refreshKey: 0, fishData: data });
+  expect(wrapper.findComponent(PriceSummary).exists()).toBe(false);
 });
 
 test("?tab lạ → về tab Cân", async () => {

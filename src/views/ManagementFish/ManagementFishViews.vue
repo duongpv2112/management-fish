@@ -37,8 +37,7 @@
     </section>
 
     <section v-if="activeMobileTab === 'tien'" class="mobile-panel">
-      <PriceSummary :sessionId="selectedSessionId" :refreshKey="summaryRefreshKey" />
-      <StatisticData :fishData="fishData"></StatisticData>
+      <PriceCards :sessionId="selectedSessionId" :refreshKey="summaryRefreshKey" :fishData="fishData" />
     </section>
 
     <MobileTabBar v-model="activeMobileTab" />
@@ -160,6 +159,7 @@ import { sessionLabel } from "@/common/sessionLabel";
 import MobileTabBar from "./components/MobileTabBar.vue";
 import SessionSheet from "./components/SessionSheet.vue";
 import FishWeightCards from "./components/FishWeightCards.vue";
+import PriceCards from "./components/PriceCards.vue";
 import SessionBar from "./components/SessionBar.vue";
 import DataViewer from "./components/DataViewer.vue";
 import AddWeight from "./components/AddWeight.vue";
