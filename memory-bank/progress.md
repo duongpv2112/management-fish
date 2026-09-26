@@ -36,3 +36,9 @@
 - Nhập được số cân thập phân (`25,5` hoặc `25.5`) qua `common.parseDecimal`; combobox đồng bộ chữ hiển thị khi giá trị đổi từ bên ngoài.
 - `AddWeight` chỉ emit `weightAdded` sau khi lưu thành công, giữ dữ liệu khi lưu lỗi, hiển thị thông báo; expose `setFormValues`/`save`.
 - Bảng và biểu đồ tải lại ngay sau khi thêm cân (một lần gọi `getDataFish`, `StatisticData` nhận prop `fishData`); DB trống hoặc API lỗi không còn làm treo màn hình; tìm kiếm/đổi số dòng quay về trang 1.
+
+## Cập nhật 2026-09-26 — CRUD danh mục & sửa bản ghi cân (kế hoạch 03)
+- Bật Vue Router (hash history): trang "Cân cá" (`/`) và "Danh mục" (`/#/danh-muc`), thanh điều hướng `AppNav`.
+- Trang Danh mục: thêm/sửa tại chỗ/xóa loại cá và loại giỏ (trọng lượng giỏ nhập được `1,5`).
+- Bấm vào một ô trên bảng cân để sửa hoặc xóa lần cân đó; bảng và biểu đồ tải lại sau khi lưu.
+- Bỏ cache localStorage danh sách loại cá/loại giỏ trong form thêm cân.
