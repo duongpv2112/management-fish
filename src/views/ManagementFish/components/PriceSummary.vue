@@ -4,6 +4,18 @@
     <template v-else>
       <div class="error-message no-print" v-if="errorMessage">{{ errorMessage }}</div>
 
+      <div class="price-summary__currency no-print" v-if="summary">
+        <label for="currencySelect">Loại tiền</label>
+        <select
+          id="currencySelect"
+          :value="currency"
+          :disabled="isSaving"
+          @change="changeCurrency($event)"
+        >
+          <option v-for="(item, code) in CURRENCIES" :key="code" :value="code">{{ item.label }}</option>
+        </select>
+      </div>
+
       <!-- Vùng in phiếu: khi in chỉ in phần này -->
       <div class="price-summary__print-area" v-if="summary">
         <div class="price-summary__header">
@@ -19,7 +31,7 @@
               <th class="number">Số lần cân</th>
               <th class="number">Tổng cân (kg)</th>
               <th class="number">Trừ giỏ còn (kg)</th>
-              <th class="number">Đơn giá (đ/kg)</th>
+              <th class="number">Đơn giá ({{ currencySymbol }}/kg)</th>
               <th class="number">Thành tiền</th>
             </tr>
           </thead>
@@ -33,17 +45,20 @@
               <td class="number">{{ formatKg(line.totalGross) }}</td>
               <td class="number">{{ formatKg(line.totalNet) }}</td>
               <td class="number">
-                <input
-                  :id="`price-${line.fishTypeId}`"
-                  class="price-input no-print"
-                  inputmode="numeric"
-                  placeholder="Nhập giá"
-                  :value="priceInputs[line.fishTypeId]"
-                  :disabled="isSaving"
-                  @input="priceInputs[line.fishTypeId] = $event.target.value"
-                  @blur="savePrice(line)"
-                  @keydown.enter="$event.target.blur()"
-                />
+                <div class="price-input-wrapper no-print">
+                  <input
+                    :id="`price-${line.fishTypeId}`"
+                    class="price-input"
+                    :inputmode="currency === 'VND' ? 'numeric' : 'decimal'"
+                    placeholder="Nhập giá"
+                    :value="priceInputs[line.fishTypeId]"
+                    :disabled="isSaving"
+                    @input="priceInputs[line.fishTypeId] = $event.target.value"
+                    @blur="savePrice(line)"
+                    @keydown.enter="$event.target.blur()"
+                  />
+                  <span class="price-input-symbol">{{ currencySymbol }}</span>
+                </div>
                 <span class="print-only">{{ line.unitPrice === null ? "" : formatMoney(line.unitPrice) }}</span>
               </td>
               <td class="number">
@@ -78,11 +93,18 @@
 </template>
 
 <script setup>
-import { reactive, ref, watch } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 
 import CPButton from "@/components/ButtonComponent.vue";
 import WeighSessionAPI from "@/services/weighSessionAPI";
 import { common } from "@/common/common";
+import {
+  CURRENCIES,
+  DEFAULT_CURRENCY,
+  formatMoney as formatCurrencyMoney,
+  formatPriceInput,
+  parseMoney,
+} from "@/common/currency";
 
 const props = defineProps({
   sessionId: {
@@ -104,18 +126,16 @@ const priceInputs = reactive({});
 
 const round2 = (value) => Math.round(value * 100) / 100;
 const formatKg = (value) => String(round2(value ?? 0)).replace(".", ",");
-const formatMoney = (value) => `${value ? common.formatCurrency(value) : "0"} đ`;
-
-// "40.000" hay "40000" đều là 40000; ô trống nghĩa là chưa có giá
-const parsePrice = (text) => {
-  const digits = (text ?? "").toString().replace(/\D/g, "");
-  return digits === "" ? null : Number(digits);
-};
+// Loại tiền của phiên (phiên cũ chưa có trường này là VND)
+const currency = computed(() => summary.value?.session?.currency ?? DEFAULT_CURRENCY);
+const currencySymbol = computed(() => (CURRENCIES[currency.value] ?? CURRENCIES[DEFAULT_CURRENCY]).symbol);
+const formatMoney = (value) => formatCurrencyMoney(value, currency.value);
+const formatUnitPrice = (value) => formatPriceInput(value, currency.value);
 
 const resetPriceInputs = () => {
   Object.keys(priceInputs).forEach((key) => delete priceInputs[key]);
   summary.value?.lines.forEach((line) => {
-    priceInputs[line.fishTypeId] = line.unitPrice === null ? "" : String(line.unitPrice);
+    priceInputs[line.fishTypeId] = formatUnitPrice(line.unitPrice);
   });
 };
 
@@ -135,9 +155,10 @@ const loadSummary = async () => {
 
 // Rời ô đơn giá: gửi lại toàn bộ bảng giá (giữ giá các loại cá khác), rồi tải lại tổng hợp
 const savePrice = async (line) => {
-  const newPrice = parsePrice(priceInputs[line.fishTypeId]);
+  // VND: "40.000" hay "40000" đều là 40000; USD: "2,5" hay "2.50" là 2.5; ô trống là chưa có giá
+  const newPrice = parseMoney(priceInputs[line.fishTypeId], currency.value);
   if (newPrice === line.unitPrice) {
-    priceInputs[line.fishTypeId] = line.unitPrice === null ? "" : String(line.unitPrice);
+    priceInputs[line.fishTypeId] = formatUnitPrice(line.unitPrice);
     return;
   }
 
@@ -156,7 +177,32 @@ const savePrice = async (line) => {
   } catch (error) {
     errorMessage.value = error?.message || "Cập nhật giá phiên không thành công!";
     // Trả ô về giá cũ
-    priceInputs[line.fishTypeId] = line.unitPrice === null ? "" : String(line.unitPrice);
+    priceInputs[line.fishTypeId] = formatUnitPrice(line.unitPrice);
+  } finally {
+    isSaving.value = false;
+  }
+};
+
+// Đổi loại tiền của phiên: server xóa bảng giá cũ nên hỏi lại nếu đã nhập giá
+const changeCurrency = async ($event) => {
+  const select = $event.target;
+  const newCurrency = select.value;
+  if (newCurrency === currency.value) return;
+
+  const hasPrices = summary.value?.lines.some((line) => line.unitPrice !== null);
+  if (hasPrices && !window.confirm("Đổi loại tiền sẽ xóa đơn giá đã nhập của phiên này. Tiếp tục?")) {
+    select.value = currency.value;
+    return;
+  }
+
+  errorMessage.value = "";
+  isSaving.value = true;
+  try {
+    await WeighSessionAPI.updateSessionCurrency(props.sessionId, newCurrency);
+    await loadSummary();
+  } catch (error) {
+    errorMessage.value = error?.message || "Đổi loại tiền không thành công!";
+    select.value = currency.value;
   } finally {
     isSaving.value = false;
   }
@@ -228,12 +274,49 @@ watch(() => [props.sessionId, props.refreshKey], loadSummary, { immediate: true 
       font-weight: 600;
     }
 
+    .price-input-wrapper {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
     .price-input {
       width: 100px;
       padding: 4px 8px;
       border: 1px solid $color-border;
       border-radius: 4px;
       text-align: right;
+
+      &:focus {
+        outline: none;
+        border-color: $color-primary;
+      }
+    }
+
+    .price-input-symbol {
+      min-width: 12px;
+      color: $color-text-primary;
+    }
+  }
+
+  .price-summary__currency {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: $color-text-primary;
+
+    label {
+      font-weight: 600;
+    }
+
+    select {
+      padding: 4px 8px;
+      border: 1px solid $color-border;
+      border-radius: 4px;
+      background-color: $color-card-background;
 
       &:focus {
         outline: none;

@@ -63,3 +63,8 @@
 
 ## Cập nhật 2026-09-26 — Combobox mở khi bấm vào ô
 - `ComboboxComponent`: bấm vào ô nhập (không chỉ mũi tên) là mở danh sách đầy đủ để chọn; đang mở thì bấm tiếp vẫn giữ mở để gõ lọc; combobox bị khóa thì không mở.
+
+## Cập nhật 2026-09-26 — Loại tiền theo phiên
+- Tab "Tiền" có ô chọn loại tiền (VND/USD) cho phiên; đổi khi đã có giá thì hỏi xác nhận vì server xóa bảng giá cũ.
+- Ô đơn giá hiển thị theo loại tiền ("45.000" kèm "đ", "1.75" kèm "$"); tiêu đề cột, thành tiền, tổng và phiếu in theo loại tiền. Helper: `src/common/currency.js`.
+- Cần BE có `updateSessionCurrency` (PR BE cùng tên nhánh `feature/session-currency`).
