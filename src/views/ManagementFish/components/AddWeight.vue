@@ -8,44 +8,51 @@
       @parsed="handleVoiceParsed"
     />
     <div class="add-weight-form">
-      <CPCombobox
-        class="flex-1"
-        idControl="fishType"
-        labelControl="Loại cá"
-        :modelValue="fishTypeValue"
-        height="36px"
-        placeholderText="Nhập loại cá"
-        :lstData="lstDataFishType"
-        dataField="_id"
-        dataFieldText="fishName"
-        iconCombobox="icon-chevron-down"
-        @update="($event) => (fishTypeValue = $event)"
-      />
+      <div class="add-weight-field">
+        <div class="add-weight-label">Loại cá</div>
+        <ChoiceGrid
+          idPrefix="fishType"
+          :items="lstDataFishType"
+          :modelValue="fishTypeValue"
+          valueField="_id"
+          textField="fishName"
+          :ranking="fishRanking"
+          :maxVisible="5"
+          emptyText="Chưa có loại cá — thêm ở trang Danh mục"
+          @update="selectFishType"
+        />
+      </div>
 
-      <CPCombobox
-        class="flex-1"
-        idControl="basketType"
-        labelControl="Loại giỏ"
-        :modelValue="basketTypeValue"
-        height="36px"
-        placeholderText="Nhập loại giỏ"
-        :lstData="lstDataBasketType"
-        dataField="_id"
-        dataFieldText="basketName"
-        iconCombobox="icon-chevron-down"
-        @update="($event) => (basketTypeValue = $event)"
-      />
+      <div class="add-weight-field">
+        <div class="add-weight-label">Loại giỏ</div>
+        <ChoiceGrid
+          idPrefix="basketType"
+          :items="lstDataBasketType"
+          :modelValue="basketTypeValue"
+          valueField="_id"
+          textField="basketName"
+          :subText="basketSubText"
+          :ranking="basketRanking"
+          :maxVisible="4"
+          emptyText="Chưa có loại giỏ — thêm ở trang Danh mục"
+          @update="selectBasketType"
+        />
+      </div>
 
       <CPInput
-        class="flex-1"
+        class="flex-1 add-weight-weight"
         idControl="fishWeight"
-        labelControl="Số cân cá"
+        labelControl="Số cân (gồm giỏ)"
         :modelValue="fishWeightValue"
-        height="36px"
-        placeholderText="Nhập cân cá"
+        height="48px"
+        placeholderText="Nhập số cân"
         :typeInput="1"
         @update="($event) => (fishWeightValue = $event)"
+        @enter="save"
       />
+      <div v-if="netPreview" class="net-preview" :class="{ 'net-preview--error': netPreview.isError }">
+        {{ netPreview.text }}
+      </div>
     </div>
     <div class="error-message" v-if="errorMessage">{{ errorMessage }}</div>
     <div class="success-message" v-if="successMessage">
@@ -55,20 +62,20 @@
       </button>
     </div>
     <CPButton
-      class="btn-add-weight"
+      class="btn-add-weight add-weight__save"
       idControl="btnSaveFishWeight"
-      height="36px"
+      height="52px"
       textButton="Lưu số cân"
-      :disabled="isLoading"
+      :disabled="isLoading || !canSave"
       @click="save"
     />
   </div>
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 
-import CPCombobox from "@/components/ComboboxComponent.vue";
+import ChoiceGrid from "@/components/ChoiceGrid.vue";
 import CPInput from "@/components/InputComponent.vue";
 import CPButton from "@/components/ButtonComponent.vue";
 import VoiceInput from "./VoiceInput.vue";
@@ -77,8 +84,21 @@ import FishTypeAPI from "@/services/fishTypeAPI";
 import BasketTypeAPI from "@/services/basketTypeAPI";
 import FishWeightAPI from "@/services/fishWeightAPI";
 import { common } from "@/common/common";
+import { rankChoices } from "@/common/rankChoices";
+import { getRecent, pushRecent, RECENT_BASKET_KEY, RECENT_FISH_KEY } from "@/common/recentChoices";
+
+const props = defineProps({
+  // getDataFish của phiên đang chọn: dùng để đưa loại cá/giỏ cân nhiều lên đầu lưới
+  sessionFishData: {
+    type: Array,
+    default: () => [],
+  },
+});
 
 const emit = defineEmits(["weightAdded", "weightUndone"]);
+
+const FISH_MAX_VISIBLE = 5;
+const BASKET_MAX_VISIBLE = 4;
 
 // Thời gian còn hiện nút "Hoàn tác" sau khi lưu
 const UNDO_TIMEOUT_MS = 10000;
@@ -163,6 +183,80 @@ const getDataBasketType = async () => {
   }
 };
 
+// Danh sách "dùng gần đây" đọc từ localStorage; cập nhật khi lưu hoặc chọn từ "Loại khác"
+const recentFishIds = ref(getRecent(RECENT_FISH_KEY));
+const recentBasketIds = ref(getRecent(RECENT_BASKET_KEY));
+
+// Số lần cân trong phiên theo loại cá và theo loại giỏ
+const sessionCounts = computed(() => {
+  const fish = {};
+  const basket = {};
+  props.sessionFishData.forEach((fishType) => {
+    const items = fishType.fishWeightItems ?? [];
+    fish[fishType._id] = items.length;
+    items.forEach((item) => {
+      if (item.basketType) basket[item.basketType] = (basket[item.basketType] ?? 0) + 1;
+    });
+  });
+  return { fish, basket };
+});
+
+const fishRanking = computed(() =>
+  rankChoices({
+    items: lstDataFishType.value,
+    valueField: "_id",
+    sessionCounts: sessionCounts.value.fish,
+    recentIds: recentFishIds.value,
+  })
+);
+
+const basketRanking = computed(() =>
+  rankChoices({
+    items: lstDataBasketType.value,
+    valueField: "_id",
+    sessionCounts: sessionCounts.value.basket,
+    recentIds: recentBasketIds.value,
+  })
+);
+
+const basketSubText = (basket) => `${String(basket.basketWeight ?? 0).replace(".", ",")} kg`;
+
+// Chọn một loại không nằm trong nhóm đang hiện (tức là từ "Loại khác") → đưa lên nhóm hay cân ngay
+const selectFishType = (id) => {
+  fishTypeValue.value = id;
+  if (!fishRanking.value.slice(0, FISH_MAX_VISIBLE).includes(id)) {
+    recentFishIds.value = pushRecent(RECENT_FISH_KEY, id);
+  }
+};
+
+const selectBasketType = (id) => {
+  basketTypeValue.value = id;
+  if (!basketRanking.value.slice(0, BASKET_MAX_VISIBLE).includes(id)) {
+    recentBasketIds.value = pushRecent(RECENT_BASKET_KEY, id);
+  }
+};
+
+const canSave = computed(() => {
+  const weight = common.parseDecimal(fishWeightValue.value);
+  return Boolean(fishTypeValue.value && basketTypeValue.value && weight && weight > 0);
+});
+
+const round2 = (value) => Math.round(value * 100) / 100;
+const formatKg = (value) => String(round2(value)).replace(".", ",");
+
+// Lần cân mới trừ theo trọng lượng hiện tại của giỏ đang chọn (giống server)
+const netPreview = computed(() => {
+  const fishWeight = common.parseDecimal(fishWeightValue.value);
+  const basket = lstDataBasketType.value.find((item) => item._id === basketTypeValue.value);
+  if (!fishWeight || fishWeight <= 0 || !basket) return null;
+  const basketWeight = basket.basketWeight ?? 0;
+  const net = round2(fishWeight - basketWeight);
+  if (net <= 0) {
+    return { isError: true, text: `Số cân phải lớn hơn trọng lượng giỏ (${formatKg(basketWeight)} kg)` };
+  }
+  return { isError: false, text: `Còn ${formatKg(net)} kg sau khi trừ giỏ ${formatKg(basketWeight)} kg` };
+});
+
 // Lệnh "hủy" bằng giọng nói chỉ xóa số cân
 const resetWeight = () => {
   fishWeightValue.value = null;
@@ -220,6 +314,8 @@ const save = async () => {
     let result = await FishWeightAPI.saveFishWeight(dataSaveFishWeight);
     successMessage.value = "Lưu số cân thành công!";
     offerUndo(result?.data?._id);
+    recentFishIds.value = pushRecent(RECENT_FISH_KEY, dataSaveFishWeight.fishType);
+    recentBasketIds.value = pushRecent(RECENT_BASKET_KEY, dataSaveFishWeight.basketType);
     resetForm();
     // Chỉ báo cho component cha tải lại dữ liệu sau khi đã lưu thành công
     emit("weightAdded", result?.data);
@@ -344,10 +440,33 @@ onBeforeUnmount(clearUndo);
   .add-weight-form {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
 
     .flex-1 {
       flex: 1;
+    }
+
+    .add-weight-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: $color-text-primary;
+      margin-bottom: 6px;
+    }
+
+    // Ô số cân chữ to để đọc được khi đứng cạnh cân
+    .add-weight-weight :deep(input) {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .net-preview {
+      margin-top: -4px;
+      font-size: 14px;
+      color: $color-primary;
+
+      &.net-preview--error {
+        color: $color-error;
+      }
     }
   }
   
