@@ -537,6 +537,8 @@ onBeforeUnmount(clearUndo);
       position: fixed;
       left: 12px;
       right: 12px;
+      // Bỏ width: 100% của máy tính, nếu không nút rộng bằng màn hình rồi lệch sang phải 12px
+      width: auto;
       bottom: calc(56px + 8px + env(safe-area-inset-bottom));
       z-index: 700;
       margin-top: 0;
