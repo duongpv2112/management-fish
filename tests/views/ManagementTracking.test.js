@@ -1,4 +1,4 @@
-import { test, expect, vi, beforeEach } from "vitest";
+import { test, expect, vi, beforeEach, afterEach, describe } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
 
 vi.mock("@/services/logTrackingAPI", () => ({ default: { getLogTrackings: vi.fn() } }));
@@ -99,4 +99,34 @@ test("không có dữ liệu", async () => {
   const wrapper = await mountPage();
   expect(wrapper.text()).toContain("Chưa có nhật ký.");
   expect(wrapper.find(".pagination span").text()).toBe("Trang 1 / 1");
+});
+
+describe("điện thoại", () => {
+  const originalMatchMedia = window.matchMedia;
+
+  beforeEach(() => {
+    window.matchMedia = vi.fn(() => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+  });
+
+  afterEach(() => {
+    window.matchMedia = originalMatchMedia;
+  });
+
+  test("nhật ký là danh sách từng dòng thay cho bảng; dòng lỗi tô đỏ", async () => {
+    const wrapper = await mountPage();
+    expect(wrapper.find("table.log-table").exists()).toBe(false);
+    const items = wrapper.findAll(".log-list .log-item");
+    expect(items).toHaveLength(2);
+    expect(items[0].find(".log-item__meta").text()).toBe("26/09/2026 07:05 · Cá trắm");
+    expect(items[0].find(".log-item__text").text()).toBe("Thêm mới bản ghi cân cá: 'Cá trắm' thành công");
+    expect(items[0].classes()).not.toContain("log-item--error");
+    expect(items[1].classes()).toContain("log-item--error");
+    expect(items[1].find(".log-item__meta").text()).toBe("25/09/2026 18:30");
+  });
+
+  test("chưa có dữ liệu → thông báo trống trong danh sách", async () => {
+    vi.mocked(LogTrackingAPI.getLogTrackings).mockResolvedValue(page([], 0));
+    const wrapper = await mountPage();
+    expect(wrapper.find(".log-list__empty").text()).toBe("Chưa có nhật ký.");
+  });
 });

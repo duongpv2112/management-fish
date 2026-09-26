@@ -17,3 +17,14 @@ test("ô số chặn phím chữ", () => {
   const wrapper = mount(CPInput, { props: { typeInput: 1 } });
   expect(pressKey(wrapper, "a")).toBe(true);
 });
+
+test("ô số (typeInput 1) bật bàn phím số thập phân trên điện thoại", () => {
+  const wrapper = mount(CPInput, { props: { typeInput: 1 } });
+  expect(wrapper.find("input").attributes("inputmode")).toBe("decimal");
+});
+
+test("ô chữ không đặt inputmode; truyền inputmode thì dùng giá trị đó", () => {
+  expect(mount(CPInput).find("input").attributes("inputmode")).toBeUndefined();
+  const numeric = mount(CPInput, { props: { typeInput: 1, inputmode: "numeric" } });
+  expect(numeric.find("input").attributes("inputmode")).toBe("numeric");
+});

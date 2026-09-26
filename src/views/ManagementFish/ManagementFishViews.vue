@@ -1,14 +1,100 @@
 <template>
-  <div class="management-fish">
-    <div class="management-fish__heading">Quản lý cân cá nhà Đặng Ánh</div>
-    <div class="management-fish__container">
+  <!-- Điện thoại: một việc mỗi tab (Cân | Bảng | Tiền), nút Lưu ghim đáy -->
+  <div v-if="isMobile" class="management-fish management-fish--mobile">
+    <div class="load-error" v-if="loadError">{{ loadError }}</div>
+
+    <!-- v-show để form cân không bị tạo lại (mất số đang nhập) khi chuyển tab -->
+    <section v-show="activeMobileTab === 'can'" class="mobile-panel">
+      <div v-if="isSessionClosed" class="session-closed-panel">
+        <p>Phiên đã kết thúc.</p>
+        <button
+          v-if="openSession"
+          type="button"
+          class="btn-go-open"
+          @click="selectSession(openSession._id)"
+        >
+          Về phiên đang mở
+        </button>
+        <button type="button" class="btn-new-session-mobile" @click="isSessionSheetOpen = true">Phiên mới</button>
+      </div>
+      <template v-else>
+        <AddWeight
+          :sessionFishData="fishData"
+          @weightAdded="handleWeightAdded"
+          @weightUndone="handleEditDone"
+        ></AddWeight>
+        <RecentWeights
+          :fishData="fishData"
+          :basketTypes="basketTypes"
+          @edit="openEditDialog"
+          @deleted="handleEditDone"
+        />
+      </template>
+    </section>
+
+    <section v-if="activeMobileTab === 'bang'" class="mobile-panel">
+      <FishWeightCards :fishData="fishData" :readOnly="isSessionClosed" @editItem="openEditDialog" />
+    </section>
+
+    <section v-if="activeMobileTab === 'tien'" class="mobile-panel">
+      <PriceCards :sessionId="selectedSessionId" :refreshKey="summaryRefreshKey" :fishData="fishData" />
+    </section>
+
+    <MobileTabBar v-model="activeMobileTab" />
+    <SessionSheet
+      :open="isSessionSheetOpen"
+      :sessions="sessions"
+      :selectedId="selectedSessionId"
+      @close="isSessionSheetOpen = false"
+      @select="selectSession"
+      @created="handleSessionChanged"
+      @closed="handleSessionChanged"
+    />
+    <WeightEditDialog
+      v-if="editingItem"
+      :item="editingItem"
+      :fishTypes="fishData"
+      :basketTypes="basketTypes"
+      @saved="handleEditDone"
+      @deleted="handleEditDone"
+      @close="editingItem = null"
+    />
+  </div>
+
+  <!-- Máy tính: nhập bên trái, xem bên phải -->
+  <div v-else class="management-fish">
+    <div class="management-fish__top">
       <SessionBar
+        class="management-fish__session"
         :sessions="sessions"
         :selectedId="selectedSessionId"
         @select="selectSession"
         @created="handleSessionChanged"
         @closed="handleSessionChanged"
       />
+    </div>
+    <div class="management-fish__container">
+      <div class="management-fish__left">
+        <div class="add-data">
+          <div v-if="isSessionClosed" class="session-closed">
+            Phiên đã kết thúc. Chọn phiên đang mở hoặc bấm "Phiên mới" để cân tiếp.
+          </div>
+          <template v-else>
+            <AddWeight
+              :sessionFishData="fishData"
+              @weightAdded="handleWeightAdded"
+              @weightUndone="handleEditDone"
+            ></AddWeight>
+            <RecentWeights
+              :fishData="fishData"
+              :basketTypes="basketTypes"
+              @edit="openEditDialog"
+              @deleted="handleEditDone"
+            />
+          </template>
+        </div>
+      </div>
+      <div class="management-fish__right">
       <div class="viewer-data">
         <div class="load-error" v-if="loadError">{{ loadError }}</div>
         <DataViewer
@@ -17,20 +103,6 @@
           :readOnly="isSessionClosed"
           @editItem="openEditDialog"
         ></DataViewer>
-      </div>
-      <div class="add-data">
-        <div v-if="isSessionClosed" class="session-closed">
-          Phiên đã kết thúc. Chọn phiên đang mở hoặc bấm "Phiên mới" để cân tiếp.
-        </div>
-        <template v-else>
-          <AddWeight @weightAdded="handleWeightAdded" @weightUndone="handleEditDone"></AddWeight>
-          <RecentWeights
-            :fishData="fishData"
-            :basketTypes="basketTypes"
-            @edit="openEditDialog"
-            @deleted="handleEditDone"
-          />
-        </template>
       </div>
       <div class="statistic-data">
         <div class="statistic-tabs">
@@ -58,6 +130,7 @@
         />
         <StatisticData v-else :fishData="fishData"></StatisticData>
       </div>
+      </div>
     </div>
 
     <WeightEditDialog
@@ -73,11 +146,19 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { routeLocationKey, routerKey } from "vue-router";
 
 import FishTypeAPI from "../../services/fishTypeAPI";
 import WeighSessionAPI from "@/services/weighSessionAPI";
+import { useIsMobile } from "@/composables/useIsMobile";
+import { clearTopBarAction, setTopBarAction } from "@/common/topBarAction";
+import { sessionLabel } from "@/common/sessionLabel";
 
+import MobileTabBar from "./components/MobileTabBar.vue";
+import SessionSheet from "./components/SessionSheet.vue";
+import FishWeightCards from "./components/FishWeightCards.vue";
+import PriceCards from "./components/PriceCards.vue";
 import SessionBar from "./components/SessionBar.vue";
 import DataViewer from "./components/DataViewer.vue";
 import AddWeight from "./components/AddWeight.vue";
@@ -104,6 +185,50 @@ const selectedSession = computed(() =>
 );
 // Phiên đã kết thúc thì chỉ xem, không thêm/sửa/xóa lần cân
 const isSessionClosed = computed(() => selectedSession.value?.status === "closed");
+const openSession = computed(() => sessions.value.find((session) => session.status === "open"));
+
+const isMobile = useIsMobile();
+const isSessionSheetOpen = ref(false);
+
+// Tab điện thoại lưu trong ?tab= để tải lại trang/Back vẫn đúng tab.
+// inject thay cho useRoute để component vẫn chạy khi không có router (test cũ)
+const MOBILE_TABS = ["can", "bang", "tien"];
+const route = inject(routeLocationKey, null);
+const router = inject(routerKey, null);
+const localMobileTab = ref("can");
+const activeMobileTab = computed({
+  get() {
+    const tab = route ? route.query.tab : localMobileTab.value;
+    return MOBILE_TABS.includes(tab) ? tab : "can";
+  },
+  set(tab) {
+    if (!router || !route) {
+      localMobileTab.value = tab;
+      return;
+    }
+    const query = { ...route.query };
+    if (tab === "can") delete query.tab;
+    else query.tab = tab;
+    router.replace({ query });
+  },
+});
+
+// Điện thoại: nút phiên nằm trên thanh trên cùng (AppTopBar)
+watch(
+  [isMobile, selectedSession],
+  () => {
+    if (isMobile.value) {
+      setTopBarAction(sessionLabel(selectedSession.value), () => {
+        isSessionSheetOpen.value = true;
+      });
+    } else {
+      clearTopBarAction();
+    }
+  },
+  { immediate: true }
+);
+
+onBeforeUnmount(clearTopBarAction);
 
 // Tải danh sách phiên; giữ phiên đang chọn nếu còn, không thì chọn phiên đang mở (hoặc mới nhất)
 const loadSessions = async ({ selectOpen = false } = {}) => {
@@ -131,19 +256,21 @@ const loadData = async () => {
     loadError.value = "Không thể tải dữ liệu, vui lòng thử lại sau.";
     console.error("Lỗi khi tải dữ liệu cá:", error);
   } finally {
-    // Math.max(0, ...) để DB trống không cho -Infinity
-    let maxRows = Math.max(
-      0,
-      ...fishData.value.map((fishType) => fishType.fishWeights.length)
-    );
-
-    if (dataViewerRef.value) {
-      dataViewerRef.value.initDataTable(fishData.value, maxRows);
-    }
-
+    refreshTable();
     isLoading.value = false;
   }
 };
+
+// Đổ dữ liệu vào bảng; gọi cả khi bảng vừa được tạo (mở tab Bảng trên điện thoại, đổi bố cục)
+const refreshTable = () => {
+  // Math.max(0, ...) để DB trống không cho -Infinity
+  let maxRows = Math.max(0, ...fishData.value.map((fishType) => fishType.fishWeights.length));
+  dataViewerRef.value?.initDataTable(fishData.value, maxRows);
+};
+
+watch(dataViewerRef, (viewer) => {
+  if (viewer) refreshTable();
+});
 
 const editingItem = ref(null);
 const basketTypes = ref([]);
@@ -195,112 +322,154 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
+$card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+@mixin card {
+  background-color: $color-card-background;
+  border-radius: $radius-lg;
+  box-shadow: $card-shadow;
+  padding: 16px;
+}
+
+.load-error {
+  color: $color-error;
+  background-color: lighten($color-error, 40%);
+  border-radius: $radius-md;
+  padding: 8px;
+  margin-bottom: 12px;
+  text-align: center;
+  font-size: 14px;
+}
+
+// ---------- Máy tính (≥ 900px) ----------
 .management-fish {
   display: flex;
   flex-direction: column;
-  padding: 0 16px 20px;
+  gap: 16px;
+  padding: 16px;
   width: 100%;
   flex: 1;
   background-color: $color-background;
 
-  .management-fish__heading {
-    font-size: 24px;
-    text-transform: uppercase;
+  .management-fish__top {
     display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 20px 0px;
-    font-weight: 600;
-    color: $color-primary;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .management-fish__session {
+    flex: 1;
+    min-width: 320px;
   }
 
   .management-fish__container {
-    display: flex;
-    width: 100%;
+    display: grid;
+    grid-template-columns: 360px minmax(0, 1fr);
     gap: 16px;
-    flex-wrap: wrap;
-    flex: 1;
+    align-items: start;
+  }
 
-    .viewer-data {
-      width: 100%;
+  .management-fish__left,
+  .management-fish__right {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+  }
 
-      .load-error {
-        color: $color-error;
-        background-color: lighten($color-error, 40%);
-        border-radius: 4px;
-        padding: 8px;
-        margin-bottom: 16px;
-        text-align: center;
-        font-size: 14px;
-      }
-      background-color: $color-card-background;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      padding: 16px;
-      transition: box-shadow 0.3s ease;
+  // Không bọc thêm thẻ: AddWeight và RecentWeights tự là thẻ, xếp chồng theo chiều cao nội dung
+  .add-data {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 
-      &:hover {
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-      }
+    .session-closed {
+      @include card;
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-weight: 600;
+      color: $color-text-primary;
     }
+  }
 
-    .add-data {
-      flex: 1;
+  .viewer-data {
+    @include card;
+  }
 
-      .session-closed {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        min-height: 120px;
-        text-align: center;
+  .statistic-data {
+    @include card;
+
+    .statistic-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid $color-border;
+
+      button {
+        min-height: 40px;
+        padding: 8px 16px;
+        border: none;
+        border-bottom: 2px solid transparent;
+        background: transparent;
+        cursor: pointer;
         font-weight: 600;
         color: $color-text-primary;
-      }
-      background-color: $color-card-background;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      padding: 16px;
-      transition: box-shadow 0.3s ease;
 
-      &:hover {
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-      }
-    }
-
-    .statistic-data {
-      flex: 1;
-
-      .statistic-tabs {
-        display: flex;
-        gap: 4px;
-        margin-bottom: 12px;
-        border-bottom: 1px solid $color-border;
-
-        button {
-          padding: 8px 16px;
-          border: none;
-          border-bottom: 2px solid transparent;
-          background: transparent;
-          cursor: pointer;
-          font-weight: 600;
-          color: $color-text-primary;
-
-          &.active {
-            color: $color-primary;
-            border-bottom-color: $color-primary;
-          }
+        &.active {
+          color: $color-primary;
+          border-bottom-color: $color-primary;
         }
       }
-      background-color: $color-card-background;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      padding: 16px;
-      transition: box-shadow 0.3s ease;
+    }
+  }
+}
 
-      &:hover {
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-      }
+// ---------- Điện thoại (< 900px) ----------
+.management-fish--mobile {
+  gap: 12px;
+  padding: 12px;
+  // Chừa chỗ cho nút Lưu ghim đáy (52px) + thanh tab (56px) + khoảng cách
+  padding-bottom: calc(56px + 52px + 32px + env(safe-area-inset-bottom));
+
+  .mobile-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .session-closed-panel {
+    @include card;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: $color-text-primary;
+
+    button {
+      min-height: 48px;
+      border-radius: $radius-md;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-go-open {
+      border: none;
+      background-color: $color-primary;
+      color: $color-card-background;
+    }
+
+    .btn-new-session-mobile {
+      border: 1px solid $color-border-strong;
+      background-color: $color-card-background;
+      color: $color-primary;
     }
   }
 }

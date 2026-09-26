@@ -86,7 +86,7 @@ onBeforeUnmount(() => {
   height: 100%;
   width: 100%;
   border: 1px solid $color-border;
-  border-radius: 8px;
+  border-radius: $radius-lg;
   background-color: $color-card-background;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   padding: 16px;

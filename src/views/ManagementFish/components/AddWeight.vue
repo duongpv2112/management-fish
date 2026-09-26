@@ -1,50 +1,60 @@
 <template>
   <div class="add-weight-container">
     <h1>Thêm cân nặng</h1>
-    <VoiceInput
-      ref="voiceInputRef"
-      :fishTypes="lstDataFishType"
-      :basketTypes="lstDataBasketType"
-      @parsed="handleVoiceParsed"
-    />
     <div class="add-weight-form">
-      <CPCombobox
-        class="flex-1"
-        idControl="fishType"
-        labelControl="Loại cá"
-        :modelValue="fishTypeValue"
-        height="36px"
-        placeholderText="Nhập loại cá"
-        :lstData="lstDataFishType"
-        dataField="_id"
-        dataFieldText="fishName"
-        iconCombobox="icon-chevron-down"
-        @update="($event) => (fishTypeValue = $event)"
-      />
+      <div class="add-weight-field">
+        <div class="add-weight-label">Loại cá</div>
+        <ChoiceGrid
+          idPrefix="fishType"
+          :items="lstDataFishType"
+          :modelValue="fishTypeValue"
+          valueField="_id"
+          textField="fishName"
+          :ranking="fishRanking"
+          :maxVisible="5"
+          :emptyText="catalogEmptyText(fishLoadState, 'cá')"
+          :showCatalogLink="fishLoadState === 'ok'"
+          @update="selectFishType"
+        />
+      </div>
 
-      <CPCombobox
-        class="flex-1"
-        idControl="basketType"
-        labelControl="Loại giỏ"
-        :modelValue="basketTypeValue"
-        height="36px"
-        placeholderText="Nhập loại giỏ"
-        :lstData="lstDataBasketType"
-        dataField="_id"
-        dataFieldText="basketName"
-        iconCombobox="icon-chevron-down"
-        @update="($event) => (basketTypeValue = $event)"
-      />
+      <div class="add-weight-field">
+        <div class="add-weight-label">Loại giỏ</div>
+        <ChoiceGrid
+          idPrefix="basketType"
+          :items="lstDataBasketType"
+          :modelValue="basketTypeValue"
+          valueField="_id"
+          textField="basketName"
+          :subText="basketSubText"
+          :ranking="basketRanking"
+          :maxVisible="4"
+          :emptyText="catalogEmptyText(basketLoadState, 'giỏ')"
+          :showCatalogLink="basketLoadState === 'ok'"
+          @update="selectBasketType"
+        />
+      </div>
 
       <CPInput
-        class="flex-1"
+        class="flex-1 add-weight-weight"
         idControl="fishWeight"
-        labelControl="Số cân cá"
+        labelControl="Số cân (gồm giỏ)"
         :modelValue="fishWeightValue"
-        height="36px"
-        placeholderText="Nhập cân cá"
+        height="48px"
+        placeholderText="Nhập số cân"
         :typeInput="1"
         @update="($event) => (fishWeightValue = $event)"
+        @enter="save"
+      />
+      <div v-if="netPreview" class="net-preview" :class="{ 'net-preview--error': netPreview.isError }">
+        {{ netPreview.text }}
+      </div>
+      <!-- Micro đặt ngay dưới ô số cân (việc hay nói nhất là số cân) -->
+      <VoiceInput
+        ref="voiceInputRef"
+        :fishTypes="lstDataFishType"
+        :basketTypes="lstDataBasketType"
+        @parsed="handleVoiceParsed"
       />
     </div>
     <div class="error-message" v-if="errorMessage">{{ errorMessage }}</div>
@@ -55,20 +65,21 @@
       </button>
     </div>
     <CPButton
-      class="btn-add-weight"
+      class="btn-add-weight add-weight__save"
+      typeButton="primary"
       idControl="btnSaveFishWeight"
-      height="36px"
+      height="52px"
       textButton="Lưu số cân"
-      :disabled="isLoading"
+      :disabled="isLoading || !canSave"
       @click="save"
     />
   </div>
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 
-import CPCombobox from "@/components/ComboboxComponent.vue";
+import ChoiceGrid from "@/components/ChoiceGrid.vue";
 import CPInput from "@/components/InputComponent.vue";
 import CPButton from "@/components/ButtonComponent.vue";
 import VoiceInput from "./VoiceInput.vue";
@@ -77,8 +88,21 @@ import FishTypeAPI from "@/services/fishTypeAPI";
 import BasketTypeAPI from "@/services/basketTypeAPI";
 import FishWeightAPI from "@/services/fishWeightAPI";
 import { common } from "@/common/common";
+import { rankChoices } from "@/common/rankChoices";
+import { getRecent, pushRecent, RECENT_BASKET_KEY, RECENT_FISH_KEY } from "@/common/recentChoices";
+
+const props = defineProps({
+  // getDataFish của phiên đang chọn: dùng để đưa loại cá/giỏ cân nhiều lên đầu lưới
+  sessionFishData: {
+    type: Array,
+    default: () => [],
+  },
+});
 
 const emit = defineEmits(["weightAdded", "weightUndone"]);
+
+const FISH_MAX_VISIBLE = 5;
+const BASKET_MAX_VISIBLE = 4;
 
 // Thời gian còn hiện nút "Hoàn tác" sau khi lưu
 const UNDO_TIMEOUT_MS = 10000;
@@ -128,19 +152,33 @@ const undoLastSave = async () => {
   }
 };
 
+// Trạng thái tải danh mục: "loading" | "error" | "ok" — để lưới rỗng không bảo "thêm ở Danh mục" khi chỉ là đang tải/tải lỗi
+const fishLoadState = ref("loading");
+const basketLoadState = ref("loading");
+
+const catalogEmptyText = (state, name) => {
+  if (state === "loading") return "Đang tải…";
+  if (state === "error") return `Không tải được danh sách loại ${name}.`;
+  return `Chưa có loại ${name} — thêm ở trang Danh mục`;
+};
+
 const initDateForm = async () => {
+  // Xóa lỗi một lần ở đây; từng hàm tải không xóa lỗi của nhau
+  errorMessage.value = "";
   await getDataFishType();
   await getDataBasketType();
 };
 
 const getDataFishType = async () => {
   isLoading.value = true;
-  errorMessage.value = "";
+  fishLoadState.value = "loading";
   try {
     // Không cache: danh sách nhỏ và loại cá mới thêm ở trang Danh mục phải hiện ngay
     let result = await FishTypeAPI.getFishTypes();
-    lstDataFishType.value = result.data;
+    lstDataFishType.value = result.data ?? [];
+    fishLoadState.value = "ok";
   } catch (error) {
+    fishLoadState.value = "error";
     errorMessage.value = "Không thể tải danh sách loại cá, vui lòng thử lại sau.";
     console.error("Lỗi khi tải danh sách loại cá:", error);
   } finally {
@@ -150,18 +188,95 @@ const getDataFishType = async () => {
 
 const getDataBasketType = async () => {
   isLoading.value = true;
-  errorMessage.value = "";
+  basketLoadState.value = "loading";
   try {
     // Không cache: danh sách nhỏ và loại giỏ mới thêm ở trang Danh mục phải hiện ngay
     let result = await BasketTypeAPI.getBasketTypes();
-    lstDataBasketType.value = result.data;
+    lstDataBasketType.value = result.data ?? [];
+    basketLoadState.value = "ok";
   } catch (error) {
-    errorMessage.value = "Không thể tải danh sách loại giỏ, vui lòng thử lại sau.";
+    basketLoadState.value = "error";
+    // Giữ lỗi tải loại cá nếu có (lỗi nào cũng chặn việc lưu)
+    errorMessage.value ||= "Không thể tải danh sách loại giỏ, vui lòng thử lại sau.";
     console.error("Lỗi khi tải danh sách loại giỏ:", error);
   } finally {
     isLoading.value = false;
   }
 };
+
+// Danh sách "dùng gần đây" đọc từ localStorage; cập nhật khi lưu hoặc chọn từ "Loại khác"
+const recentFishIds = ref(getRecent(RECENT_FISH_KEY));
+const recentBasketIds = ref(getRecent(RECENT_BASKET_KEY));
+
+// Số lần cân trong phiên theo loại cá và theo loại giỏ
+const sessionCounts = computed(() => {
+  const fish = {};
+  const basket = {};
+  props.sessionFishData.forEach((fishType) => {
+    const items = fishType.fishWeightItems ?? [];
+    fish[fishType._id] = items.length;
+    items.forEach((item) => {
+      if (item.basketType) basket[item.basketType] = (basket[item.basketType] ?? 0) + 1;
+    });
+  });
+  return { fish, basket };
+});
+
+const fishRanking = computed(() =>
+  rankChoices({
+    items: lstDataFishType.value,
+    valueField: "_id",
+    sessionCounts: sessionCounts.value.fish,
+    recentIds: recentFishIds.value,
+  })
+);
+
+const basketRanking = computed(() =>
+  rankChoices({
+    items: lstDataBasketType.value,
+    valueField: "_id",
+    sessionCounts: sessionCounts.value.basket,
+    recentIds: recentBasketIds.value,
+  })
+);
+
+const basketSubText = (basket) => `${String(basket.basketWeight ?? 0).replace(".", ",")} kg`;
+
+// Chọn một loại không nằm trong nhóm đang hiện (tức là từ "Loại khác") → đưa lên nhóm hay cân ngay
+const selectFishType = (id) => {
+  fishTypeValue.value = id;
+  if (!fishRanking.value.slice(0, FISH_MAX_VISIBLE).includes(id)) {
+    recentFishIds.value = pushRecent(RECENT_FISH_KEY, id);
+  }
+};
+
+const selectBasketType = (id) => {
+  basketTypeValue.value = id;
+  if (!basketRanking.value.slice(0, BASKET_MAX_VISIBLE).includes(id)) {
+    recentBasketIds.value = pushRecent(RECENT_BASKET_KEY, id);
+  }
+};
+
+const canSave = computed(() => {
+  const weight = common.parseDecimal(fishWeightValue.value);
+  return Boolean(fishTypeValue.value && basketTypeValue.value && weight && weight > 0);
+});
+
+const round2 = (value) => Math.round(value * 100) / 100;
+const formatKg = (value) => String(round2(value)).replace(".", ",");
+
+// Lần cân mới trừ theo trọng lượng hiện tại của giỏ đang chọn (giống server)
+const netPreview = computed(() => {
+  const fishWeight = common.parseDecimal(fishWeightValue.value);
+  const basket = lstDataBasketType.value.find((item) => item._id === basketTypeValue.value);
+  if (!fishWeight || fishWeight <= 0 || !basket) return null;
+  const basketWeight = basket.basketWeight ?? 0;
+  const net = round2(fishWeight - basketWeight);
+  if (net <= 0) {
+    return { isError: true, text: `Số cân phải lớn hơn trọng lượng giỏ (${formatKg(basketWeight)} kg)` };
+  }
+  return { isError: false, text: `Còn ${formatKg(net)} kg sau khi trừ giỏ ${formatKg(basketWeight)} kg` };
+});
 
 // Lệnh "hủy" bằng giọng nói chỉ xóa số cân
 const resetWeight = () => {
@@ -220,6 +335,8 @@ const save = async () => {
     let result = await FishWeightAPI.saveFishWeight(dataSaveFishWeight);
     successMessage.value = "Lưu số cân thành công!";
     offerUndo(result?.data?._id);
+    recentFishIds.value = pushRecent(RECENT_FISH_KEY, dataSaveFishWeight.fishType);
+    recentBasketIds.value = pushRecent(RECENT_BASKET_KEY, dataSaveFishWeight.basketType);
     resetForm();
     // Chỉ báo cho component cha tải lại dữ liệu sau khi đã lưu thành công
     emit("weightAdded", result?.data);
@@ -284,9 +401,8 @@ onBeforeUnmount(clearUndo);
 <style lang="scss" scoped>
 .add-weight-container {
   width: 100%;
-  height: 100%;
   border: 1px solid $color-border;
-  border-radius: 8px;
+  border-radius: $radius-lg;
   padding: 16px;
   background-color: $color-card-background;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -306,7 +422,7 @@ onBeforeUnmount(clearUndo);
     margin-bottom: 16px;
     font-size: 14px;
     padding: 8px;
-    border-radius: 4px;
+    border-radius: $radius-md;
     text-align: center;
   }
 
@@ -328,7 +444,7 @@ onBeforeUnmount(clearUndo);
     .btn-undo {
       padding: 4px 12px;
       border: 1px solid $color-success;
-      border-radius: 4px;
+      border-radius: $radius-md;
       background-color: $color-card-background;
       color: $color-success;
       font-weight: 600;
@@ -344,30 +460,80 @@ onBeforeUnmount(clearUndo);
   .add-weight-form {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
 
     .flex-1 {
       flex: 1;
+    }
+
+    .add-weight-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: $color-text-primary;
+      margin-bottom: 6px;
+    }
+
+    // Ô số cân chữ to để đọc được khi đứng cạnh cân
+    .add-weight-weight :deep(input) {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .net-preview {
+      margin-top: -4px;
+      font-size: 14px;
+      color: $color-primary;
+
+      &.net-preview--error {
+        color: $color-error;
+      }
     }
   }
   
   .btn-add-weight {
     margin-top: 20px;
     width: 100%;
-    background-color: $color-primary;
-    color: $color-card-background;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
 
-    &:hover:not(:disabled) {
-      background-color: darken($color-primary, 10%);
+    :deep(.button-control) {
+      font-size: 17px;
+    }
+  }
+}
+
+// Điện thoại: bỏ khung thẻ và tiêu đề cho gọn; nút Lưu ghim ngay trên thanh tab, trong tầm ngón cái
+@media (max-width: 899.98px) {
+  .add-weight-container {
+    padding: 0;
+    border: none;
+    box-shadow: none;
+    background-color: transparent;
+
+    h1 {
+      display: none;
     }
 
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+    // Hoàn tác hay phải bấm vội ngay sau khi lưu nhầm → vùng chạm đủ lớn
+    .success-message .btn-undo {
+      min-height: 44px;
+      padding: 0 16px;
+      font-size: 16px;
+    }
+
+    .add-weight__save {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      // Bỏ width: 100% của máy tính, nếu không nút rộng bằng màn hình rồi lệch sang phải 12px
+      width: auto;
+      bottom: calc(56px + 8px + env(safe-area-inset-bottom));
+      z-index: 700;
+      margin-top: 0;
+      border-radius: $radius-md;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+      :deep(.button-control) {
+        font-size: 18px;
+      }
     }
   }
 }
