@@ -29,3 +29,10 @@
 - Quyết định bản địa hóa giao diện bằng tiếng Việt được thực hiện để phù hợp với người dùng mục tiêu tại nhà Đặng Ánh.
 - Việc khởi tạo Memory Bank được thực hiện để đảm bảo tài liệu dự án được duy trì tốt, hỗ trợ phát triển liên tục và bảo trì lâu dài.
 - Quyết định chuyển đổi sang cú pháp script setup của Vue 3 được thực hiện để cải thiện cấu trúc mã nguồn và tuân thủ các tiêu chuẩn hiện đại.
+
+## Cập nhật 2026-09-26 — Hạ tầng test & sửa lỗi (kế hoạch 02)
+- `npm test` chạy Vitest + @vue/test-utils (jsdom), test trong `tests/`.
+- `baseAPI` coi `{ success: false }` và lỗi mạng là lỗi (thông báo tiếng Việt), không còn crash khi mất mạng.
+- Nhập được số cân thập phân (`25,5` hoặc `25.5`) qua `common.parseDecimal`; combobox đồng bộ chữ hiển thị khi giá trị đổi từ bên ngoài.
+- `AddWeight` chỉ emit `weightAdded` sau khi lưu thành công, giữ dữ liệu khi lưu lỗi, hiển thị thông báo; expose `setFormValues`/`save`.
+- Bảng và biểu đồ tải lại ngay sau khi thêm cân (một lần gọi `getDataFish`, `StatisticData` nhận prop `fishData`); DB trống hoặc API lỗi không còn làm treo màn hình; tìm kiếm/đổi số dòng quay về trang 1.
