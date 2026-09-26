@@ -1,7 +1,7 @@
-import { test, expect, vi, beforeEach } from "vitest";
+import { test, expect, vi, beforeEach, afterEach, describe } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
 
-vi.mock("@/services/fishWeightAPI", () => ({ default: { saveFishWeight: vi.fn() } }));
+vi.mock("@/services/fishWeightAPI", () => ({ default: { saveFishWeight: vi.fn(), deleteFishWeight: vi.fn() } }));
 vi.mock("@/services/fishTypeAPI", () => ({
   default: { getFishTypes: vi.fn(async () => ({ data: [{ _id: "f1", fishName: "Cá trắm" }] })) },
 }));
@@ -106,4 +106,57 @@ test("không dùng cache localStorage cho danh sách loại cá", async () => {
   wrapper.vm.setFormValues({ fishType: "f1" });
   await flushPromises();
   expect(wrapper.find("#fishType").element.value).toBe("Cá trắm");
+});
+
+describe("Hoàn tác lần cân vừa lưu", () => {
+  const saveOnce = async () => {
+    vi.mocked(FishWeightAPI.saveFishWeight).mockResolvedValue({ success: true, data: { _id: "w9" } });
+    const wrapper = await mountForm();
+    await fillForm(wrapper, "25");
+    await wrapper.vm.save();
+    await flushPromises();
+    return wrapper;
+  };
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  test("lưu xong có nút Hoàn tác; bấm thì xóa lần cân vừa lưu và emit weightUndone", async () => {
+    vi.mocked(FishWeightAPI.deleteFishWeight).mockResolvedValue({ success: true });
+    const wrapper = await saveOnce();
+    await wrapper.find(".btn-undo").trigger("click");
+    await flushPromises();
+
+    expect(FishWeightAPI.deleteFishWeight).toHaveBeenCalledWith("w9");
+    expect(wrapper.emitted().weightUndone).toHaveLength(1);
+    expect(wrapper.find(".success-message").text()).toBe("Đã hoàn tác lần cân vừa lưu.");
+    expect(wrapper.find(".btn-undo").exists()).toBe(false);
+  });
+
+  test("nút Hoàn tác tự ẩn sau 10 giây", async () => {
+    vi.useFakeTimers();
+    const wrapper = await saveOnce();
+    expect(wrapper.find(".btn-undo").exists()).toBe(true);
+    await vi.advanceTimersByTimeAsync(10000);
+    expect(wrapper.find(".btn-undo").exists()).toBe(false);
+  });
+
+  test("hoàn tác lỗi → hiện message, không emit", async () => {
+    vi.mocked(FishWeightAPI.deleteFishWeight).mockRejectedValue(new Error("Phiên cân đã kết thúc!"));
+    const wrapper = await saveOnce();
+    await wrapper.find(".btn-undo").trigger("click");
+    await flushPromises();
+    expect(wrapper.find(".error-message").text()).toBe("Phiên cân đã kết thúc!");
+    expect(wrapper.emitted().weightUndone).toBeUndefined();
+  });
+
+  test("lưu lỗi thì không có nút Hoàn tác", async () => {
+    vi.mocked(FishWeightAPI.saveFishWeight).mockRejectedValue(new Error("x"));
+    const wrapper = await mountForm();
+    await fillForm(wrapper, "25");
+    await wrapper.vm.save();
+    await flushPromises();
+    expect(wrapper.find(".btn-undo").exists()).toBe(false);
+  });
 });

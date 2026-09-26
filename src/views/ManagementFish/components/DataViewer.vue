@@ -13,6 +13,13 @@
         <option :value="20">20 bản ghi</option>
       </select>
     </div>
+    <div
+      v-if="!isLoading && isShowTable && numberRowsOfTable > 0"
+      class="edit-hint"
+      :class="{ 'edit-hint--readonly': readOnly }"
+    >
+      {{ readOnly ? "Phiên đã kết thúc, không sửa được." : "Chạm vào số cân để sửa hoặc xóa." }}
+    </div>
     <div v-if="isLoading || !isShowTable" class="skeleton-loader">
       <div class="skeleton-header">
         <div class="skeleton-cell" v-for="n in 5"></div>
@@ -38,7 +45,7 @@
         <tr v-for="row in paginatedRows">
           <td
             v-for="(fishType, fishTypeIndex) in filteredData"
-            :class="{ 'cell-editable': fishType.items[row - 1]?._id }"
+            :class="{ 'cell-editable': !readOnly && fishType.items[row - 1]?._id }"
             :title="cellTitle(fishType.items[row - 1])"
             @click="handleClickCell(fishType, row)"
           >
@@ -70,8 +77,13 @@
 <script setup>
 import { ref, computed, watch } from "vue";
 
-defineProps({
+const props = defineProps({
   isLoading: {
+    type: Boolean,
+    default: false,
+  },
+  // Phiên đã kết thúc: chỉ xem, không mở hộp thoại sửa
+  readOnly: {
     type: Boolean,
     default: false,
   },
@@ -119,7 +131,7 @@ const cellTitle = (item) =>
 // Click vào ô có lần cân → báo component cha mở hộp thoại sửa/xóa
 const handleClickCell = (fishType, row) => {
   const item = fishType.items[row - 1];
-  if (!item?._id) return;
+  if (props.readOnly || !item?._id) return;
   emit("editItem", { ...item, fishType: fishType._id, fishName: fishType.fishName });
 };
 
@@ -209,6 +221,17 @@ const paginatedRows = computed(() => {
     }
   }
 
+  .edit-hint {
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: $color-text-primary;
+    opacity: 0.8;
+
+    &.edit-hint--readonly {
+      font-style: italic;
+    }
+  }
+
   .filter-section {
     display: flex;
     justify-content: space-between;
@@ -270,8 +293,12 @@ const paginatedRows = computed(() => {
       background-color: $color-hover;
     }
 
+    // Gạch chân chấm để nhận ra ô bấm được cả trên điện thoại (không có hover)
     & td.cell-editable {
       cursor: pointer;
+      color: $color-primary;
+      text-decoration: underline dotted;
+      text-underline-offset: 3px;
 
       &:hover {
         background-color: darken($color-hover, 5%);

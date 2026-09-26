@@ -14,6 +14,7 @@
         <DataViewer
           ref="dataViewerRef"
           :isLoading="isLoading"
+          :readOnly="isSessionClosed"
           @editItem="openEditDialog"
         ></DataViewer>
       </div>
@@ -21,7 +22,15 @@
         <div v-if="isSessionClosed" class="session-closed">
           Phiên đã kết thúc. Chọn phiên đang mở hoặc bấm "Phiên mới" để cân tiếp.
         </div>
-        <AddWeight v-else @weightAdded="handleWeightAdded"></AddWeight>
+        <template v-else>
+          <AddWeight @weightAdded="handleWeightAdded" @weightUndone="handleEditDone"></AddWeight>
+          <RecentWeights
+            :fishData="fishData"
+            :basketTypes="basketTypes"
+            @edit="openEditDialog"
+            @deleted="handleEditDone"
+          />
+        </template>
       </div>
       <div class="statistic-data">
         <div class="statistic-tabs">
@@ -75,6 +84,7 @@ import AddWeight from "./components/AddWeight.vue";
 import StatisticData from "./components/StatisticData.vue";
 import PriceSummary from "./components/PriceSummary.vue";
 import WeightEditDialog from "./components/WeightEditDialog.vue";
+import RecentWeights from "./components/RecentWeights.vue";
 import BasketTypeAPI from "@/services/basketTypeAPI";
 
 const dataViewerRef = ref(null);
@@ -138,16 +148,21 @@ const loadData = async () => {
 const editingItem = ref(null);
 const basketTypes = ref([]);
 
-// Mở hộp thoại sửa/xóa một lần cân; danh sách loại giỏ tải lúc mở để luôn mới nhất
-const openEditDialog = async (item) => {
-  if (isSessionClosed.value) return;
-  editingItem.value = item;
+// Loại giỏ dùng cho tên giỏ ở "Lần cân gần đây" và cho hộp thoại sửa
+const loadBasketTypes = async () => {
   try {
     let result = await BasketTypeAPI.getBasketTypes();
     basketTypes.value = result?.data ?? [];
   } catch (error) {
     console.error("Lỗi khi tải danh sách loại giỏ:", error);
   }
+};
+
+// Mở hộp thoại sửa/xóa một lần cân; tải lại loại giỏ lúc mở để luôn mới nhất
+const openEditDialog = async (item) => {
+  if (isSessionClosed.value) return;
+  editingItem.value = item;
+  await loadBasketTypes();
 };
 
 const handleEditDone = async () => {
@@ -175,7 +190,7 @@ const handleWeightAdded = async () => {
 
 onMounted(async () => {
   await loadSessions({ selectOpen: true });
-  await loadData();
+  await Promise.all([loadData(), loadBasketTypes()]);
 });
 </script>
 

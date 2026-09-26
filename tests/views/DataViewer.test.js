@@ -111,3 +111,40 @@ test("ô hiển thị trọng lượng thực, tooltip 'Tổng x − giỏ y'", 
   expect(cell.text()).toBe("23.5");
   expect(cell.attributes("title")).toBe("Tổng 25.5 − giỏ 2");
 });
+
+describe("gợi ý sửa và phiên chỉ xem", () => {
+  const data = () => [
+    {
+      _id: "f1",
+      fishName: "Cá trắm",
+      fishWeights: [25],
+      fishWeightItems: [{ _id: "w1", fishWeight: 25, netWeight: 23, basketWeightSnapshot: 2, basketType: "b1" }],
+    },
+  ];
+
+  test("có lần cân → hiện gợi ý chạm để sửa, ô có class cell-editable", async () => {
+    const wrapper = mount(DataViewer);
+    wrapper.vm.initDataTable(data(), 1);
+    await nextTick();
+    expect(wrapper.find(".edit-hint").text()).toBe("Chạm vào số cân để sửa hoặc xóa.");
+    expect(wrapper.find("tbody td").classes()).toContain("cell-editable");
+  });
+
+  test("readOnly (phiên đã kết thúc) → gợi ý không sửa được, click không emit", async () => {
+    const wrapper = mount(DataViewer, { props: { readOnly: true } });
+    wrapper.vm.initDataTable(data(), 1);
+    await nextTick();
+    expect(wrapper.find(".edit-hint").text()).toBe("Phiên đã kết thúc, không sửa được.");
+    const cell = wrapper.find("tbody td");
+    expect(cell.classes()).not.toContain("cell-editable");
+    await cell.trigger("click");
+    expect(wrapper.emitted().editItem).toBeUndefined();
+  });
+
+  test("chưa có lần cân nào → không hiện gợi ý", async () => {
+    const wrapper = mount(DataViewer);
+    wrapper.vm.initDataTable([], 0);
+    await nextTick();
+    expect(wrapper.find(".edit-hint").exists()).toBe(false);
+  });
+});

@@ -48,7 +48,12 @@
       />
     </div>
     <div class="error-message" v-if="errorMessage">{{ errorMessage }}</div>
-    <div class="success-message" v-if="successMessage">{{ successMessage }}</div>
+    <div class="success-message" v-if="successMessage">
+      <span>{{ successMessage }}</span>
+      <button v-if="undoItemId" type="button" class="btn-undo" :disabled="isLoading" @click="undoLastSave">
+        Hoàn tác
+      </button>
+    </div>
     <CPButton
       class="btn-add-weight"
       idControl="btnSaveFishWeight"
@@ -61,7 +66,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
+import { onBeforeUnmount, onMounted, ref } from "vue";
 
 import CPCombobox from "@/components/ComboboxComponent.vue";
 import CPInput from "@/components/InputComponent.vue";
@@ -73,7 +78,10 @@ import BasketTypeAPI from "@/services/basketTypeAPI";
 import FishWeightAPI from "@/services/fishWeightAPI";
 import { common } from "@/common/common";
 
-const emit = defineEmits(['weightAdded']);
+const emit = defineEmits(["weightAdded", "weightUndone"]);
+
+// Thời gian còn hiện nút "Hoàn tác" sau khi lưu
+const UNDO_TIMEOUT_MS = 10000;
 
 const lstDataFishType = ref([]);
 const lstDataBasketType = ref([]);
@@ -84,6 +92,41 @@ const errorMessage = ref("");
 const successMessage = ref("");
 const isLoading = ref(false);
 const voiceInputRef = ref(null);
+// _id lần cân vừa lưu, còn giá trị thì hiện nút "Hoàn tác"
+const undoItemId = ref(null);
+let undoTimer = null;
+
+const clearUndo = () => {
+  clearTimeout(undoTimer);
+  undoTimer = null;
+  undoItemId.value = null;
+};
+
+const offerUndo = (itemId) => {
+  clearUndo();
+  if (!itemId) return;
+  undoItemId.value = itemId;
+  undoTimer = setTimeout(clearUndo, UNDO_TIMEOUT_MS);
+};
+
+// Lưu nhầm: xóa ngay lần cân vừa lưu (không hỏi lại vì người dùng đã chủ động bấm Hoàn tác)
+const undoLastSave = async () => {
+  const itemId = undoItemId.value;
+  if (!itemId) return;
+  clearUndo();
+  errorMessage.value = "";
+  successMessage.value = "";
+  isLoading.value = true;
+  try {
+    await FishWeightAPI.deleteFishWeight(itemId);
+    successMessage.value = "Đã hoàn tác lần cân vừa lưu.";
+    emit("weightUndone");
+  } catch (error) {
+    errorMessage.value = error?.message || "Hoàn tác không thành công, vui lòng thử lại.";
+  } finally {
+    isLoading.value = false;
+  }
+};
 
 const initDateForm = async () => {
   await getDataFishType();
@@ -149,6 +192,7 @@ const setFormValues = ({ fishType, basketType, fishWeight } = {}) => {
 const save = async () => {
   errorMessage.value = "";
   successMessage.value = "";
+  clearUndo();
 
   // Validate input
   if (!fishTypeValue.value) {
@@ -175,6 +219,7 @@ const save = async () => {
   try {
     let result = await FishWeightAPI.saveFishWeight(dataSaveFishWeight);
     successMessage.value = "Lưu số cân thành công!";
+    offerUndo(result?.data?._id);
     resetForm();
     // Chỉ báo cho component cha tải lại dữ liệu sau khi đã lưu thành công
     emit("weightAdded", result?.data);
@@ -232,6 +277,8 @@ defineExpose({ setFormValues, save });
 onMounted(async () => {
   await initDateForm();
 });
+
+onBeforeUnmount(clearUndo);
 </script>
 
 <style lang="scss" scoped>
@@ -274,8 +321,24 @@ onMounted(async () => {
   }
 
   .success-message {
+    gap: 12px;
     color: $color-success;
     background-color: lighten($color-success, 40%);
+
+    .btn-undo {
+      padding: 4px 12px;
+      border: 1px solid $color-success;
+      border-radius: 4px;
+      background-color: $color-card-background;
+      color: $color-success;
+      font-weight: 600;
+      cursor: pointer;
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
   }
 
   .add-weight-form {

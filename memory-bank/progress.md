@@ -68,3 +68,10 @@
 - Tab "Tiền" có ô chọn loại tiền (VND/USD) cho phiên; đổi khi đã có giá thì hỏi xác nhận vì server xóa bảng giá cũ.
 - Ô đơn giá hiển thị theo loại tiền ("45.000" kèm "đ", "1.75" kèm "$"); tiêu đề cột, thành tiền, tổng và phiếu in theo loại tiền. Helper: `src/common/currency.js`.
 - Cần BE có `updateSessionCurrency` (PR BE cùng tên nhánh `feature/session-currency`).
+
+## Cập nhật 2026-09-26 — Sửa lần cân dễ tìm hơn
+- Bảng dữ liệu: gợi ý "Chạm vào số cân để sửa hoặc xóa.", ô sửa được gạch chân chấm; phiên đã kết thúc hiện "Phiên đã kết thúc, không sửa được." và không mở hộp thoại.
+- Hộp thoại sửa: nhãn "Số cân (gồm giỏ)" và xem trước "Còn x kg sau khi trừ giỏ y kg" (cảnh báo nếu không lớn hơn giỏ).
+- Mới: "Lần cân gần đây" (RecentWeights) dưới form thêm cân, 5 lần mới nhất với nút Sửa/Xóa.
+- Sau khi lưu có nút "Hoàn tác" trong 10 giây để xóa lần cân vừa lưu.
+- Chỉ sửa FE, dùng lại API sửa/xóa có sẵn.
