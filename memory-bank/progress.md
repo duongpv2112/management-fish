@@ -53,3 +53,33 @@
 - Thanh phiên cân (chọn phiên, "Phiên mới" hỏi tên người mua, "Kết thúc phiên"); phiên đã kết thúc thì ẩn form thêm cân.
 - Bảng cân hiển thị trọng lượng thực (đã trừ giỏ); tab "Tiền" nhập đơn giá, ra thành tiền/tổng tiền, "In phiếu"; tab "Biểu đồ".
 - Form thêm cân hiện lý do lỗi từ server (ví dụ "Số cân phải lớn hơn trọng lượng giỏ (2 kg)!").
+
+## Cập nhật 2026-09-26 — Nhật ký & đăng nhập (kế hoạch 06)
+- Trang "Đăng nhập" (`/#/dang-nhap`), mọi trang khác cần đăng nhập; hết phiên thì báo "Phiên đăng nhập đã hết hạn" và quay lại đúng trang cũ sau khi đăng nhập; nút "Đăng xuất".
+- Trang "Nhật ký" (`/#/nhat-ky`): lọc theo loại cá, phân trang, dòng lỗi tô đỏ.
+
+## Cập nhật 2026-09-26 — Xóa form sau khi lưu
+- Lưu số cân thành công (nhập tay hoặc giọng nói) thì xóa hết loại cá, loại giỏ và số cân; lần sau phải chọn/nói lại cá và giỏ. Lệnh "hủy" vẫn chỉ xóa số cân. (Thay cho hành vi "giữ cá và giỏ" ghi ở trên.)
+
+## Cập nhật 2026-09-26 — Combobox mở khi bấm vào ô
+- `ComboboxComponent`: bấm vào ô nhập (không chỉ mũi tên) là mở danh sách đầy đủ để chọn; đang mở thì bấm tiếp vẫn giữ mở để gõ lọc; combobox bị khóa thì không mở.
+
+## Cập nhật 2026-09-26 — Loại tiền theo phiên
+- Tab "Tiền" có ô chọn loại tiền (VND/USD) cho phiên; đổi khi đã có giá thì hỏi xác nhận vì server xóa bảng giá cũ.
+- Ô đơn giá hiển thị theo loại tiền ("45.000" kèm "đ", "1.75" kèm "$"); tiêu đề cột, thành tiền, tổng và phiếu in theo loại tiền. Helper: `src/common/currency.js`.
+- Cần BE có `updateSessionCurrency` (PR BE cùng tên nhánh `feature/session-currency`).
+
+## Cập nhật 2026-09-26 — Sửa lần cân dễ tìm hơn
+- Bảng dữ liệu: gợi ý "Chạm vào số cân để sửa hoặc xóa.", ô sửa được gạch chân chấm; phiên đã kết thúc hiện "Phiên đã kết thúc, không sửa được." và không mở hộp thoại.
+- Hộp thoại sửa: nhãn "Số cân (gồm giỏ)" và xem trước "Còn x kg sau khi trừ giỏ y kg" (cảnh báo nếu không lớn hơn giỏ).
+- Mới: "Lần cân gần đây" (RecentWeights) dưới form thêm cân, 5 lần mới nhất với nút Sửa/Xóa.
+- Sau khi lưu có nút "Hoàn tác" trong 10 giây để xóa lần cân vừa lưu.
+- Chỉ sửa FE, dùng lại API sửa/xóa có sẵn.
+
+## Cập nhật 2026-09-26 — Giao diện ưu tiên điện thoại (kế hoạch 07)
+- Điện thoại (< 900px): thanh trên cùng (tên trang, nút phiên, menu ☰), tab dưới Cân | Bảng | Tiền (`?tab=`), nút Lưu ghim đáy. Đo ở 375×812: form + nút Lưu nằm trọn trong màn hình, mọi nút ≥ 44px, không cuộn ngang.
+- Chọn cá/giỏ bằng lưới nút lớn (5 cá / 4 giỏ "hay cân" + "Loại khác" có ô tìm không dấu); thứ tự theo số lần cân trong phiên → dùng gần đây trên máy → danh mục.
+- Tab Bảng: thẻ theo loại cá (chạm số cân để sửa). Tab Tiền: thẻ theo loại cá, tổng, In phiếu, Biểu đồ.
+- Chọn/tạo/kết thúc phiên bằng danh sách mở từ dưới lên (kết thúc phiên có hỏi xác nhận).
+- Máy tính: 2 cột (trái nhập + gần đây, phải bảng + tiền); sửa lỗi "Lần cân gần đây" đè lên khung Tiền.
+- Nhật ký trên điện thoại là danh sách; ô nhập/nút các trang Danh mục, Đăng nhập, Nhật ký cao ≥ 44–48px, chữ 16px.

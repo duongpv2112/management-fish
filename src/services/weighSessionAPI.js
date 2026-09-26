@@ -21,6 +21,11 @@ const WeighSessionAPI = {
     return await put(`/weigh-sessions/updateSessionPrices/${id}`, { prices });
   },
 
+  // Đổi loại tiền ("VND" | "USD"); server xóa bảng giá cũ của phiên
+  async updateSessionCurrency(id, currency) {
+    return await put(`/weigh-sessions/updateSessionCurrency/${id}`, { currency });
+  },
+
   async getSessionSummary(id) {
     return await get(`/weigh-sessions/getSessionSummary/${id}`);
   },

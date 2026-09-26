@@ -1,11 +1,17 @@
 <script setup>
 import { RouterView } from "vue-router";
 import AppNav from "@/components/AppNav.vue";
+import AppTopBar from "@/components/AppTopBar.vue";
+import { useIsMobile } from "@/composables/useIsMobile";
+
+// Điện thoại: thanh trên gọn + menu ☰; máy tính: menu ngang như cũ
+const isMobile = useIsMobile();
 </script>
 
 <template>
   <div class="app-layout">
-    <AppNav />
+    <AppTopBar v-if="isMobile" />
+    <AppNav v-else />
 
     <main class="app-layout__main">
       <RouterView />
