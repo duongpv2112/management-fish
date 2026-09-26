@@ -120,9 +120,15 @@ const getDataBasketType = async () => {
   }
 };
 
-// Sau khi lưu chỉ xóa số cân, giữ loại cá và loại giỏ vì người cân thường cân
-// nhiều giỏ cùng một loại cá liên tiếp
+// Lệnh "hủy" bằng giọng nói chỉ xóa số cân
 const resetWeight = () => {
+  fishWeightValue.value = null;
+};
+
+// Lưu thành công thì xóa hết dữ liệu đã nhập để lần cân sau nhập lại từ đầu
+const resetForm = () => {
+  fishTypeValue.value = null;
+  basketTypeValue.value = null;
   fishWeightValue.value = null;
 };
 
@@ -169,7 +175,7 @@ const save = async () => {
   try {
     let result = await FishWeightAPI.saveFishWeight(dataSaveFishWeight);
     successMessage.value = "Lưu số cân thành công!";
-    resetWeight();
+    resetForm();
     // Chỉ báo cho component cha tải lại dữ liệu sau khi đã lưu thành công
     emit("weightAdded", result?.data);
     return true;
@@ -185,7 +191,7 @@ const save = async () => {
 
 /**
  * Xử lý một câu nói đã phân tích: điền các trường nghe được, rồi thực hiện lệnh "lưu"/"hủy".
- * Loại cá và loại giỏ tự "dính" giữa các lần nói vì form không xóa hai trường này.
+ * Lưu thành công thì form được xóa hết, lần nói sau cần nói lại loại cá và loại giỏ.
  */
 const handleVoiceParsed = async ({ fishTypeId, basketTypeId, weight, command }) => {
   if (fishTypeId) fishTypeValue.value = fishTypeId;
@@ -212,7 +218,7 @@ const handleVoiceParsed = async ({ fishTypeId, basketTypeId, weight, command }) 
     return;
   }
 
-  // Ghi lại trước khi lưu vì lưu thành công sẽ xóa số cân
+  // Ghi lại trước khi lưu vì lưu thành công sẽ xóa form
   const fishName = lstDataFishType.value.find((item) => item._id === fishTypeValue.value)?.fishName ?? "";
   const weightText = String(common.parseDecimal(fishWeightValue.value)).replace(".", ",");
   const ok = await save();

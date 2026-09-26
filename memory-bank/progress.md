@@ -57,3 +57,6 @@
 ## Cập nhật 2026-09-26 — Nhật ký & đăng nhập (kế hoạch 06)
 - Trang "Đăng nhập" (`/#/dang-nhap`), mọi trang khác cần đăng nhập; hết phiên thì báo "Phiên đăng nhập đã hết hạn" và quay lại đúng trang cũ sau khi đăng nhập; nút "Đăng xuất".
 - Trang "Nhật ký" (`/#/nhat-ky`): lọc theo loại cá, phân trang, dòng lỗi tô đỏ.
+
+## Cập nhật 2026-09-26 — Xóa form sau khi lưu
+- Lưu số cân thành công (nhập tay hoặc giọng nói) thì xóa hết loại cá, loại giỏ và số cân; lần sau phải chọn/nói lại cá và giỏ. Lệnh "hủy" vẫn chỉ xóa số cân. (Thay cho hành vi "giữ cá và giỏ" ghi ở trên.)

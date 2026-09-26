@@ -36,7 +36,7 @@ beforeEach(() => {
   vi.mocked(FishWeightAPI.saveFishWeight).mockReset();
 });
 
-test("lưu thành công: gọi API với số thập phân, emit sau khi lưu, chỉ xóa số cân, giữ cá và giỏ", async () => {
+test("lưu thành công: gọi API với số thập phân, emit sau khi lưu, xóa hết dữ liệu đã nhập", async () => {
   const saved = { _id: "w1", fishWeight: 25.5 };
   vi.mocked(FishWeightAPI.saveFishWeight).mockResolvedValue({ success: true, data: saved });
   const wrapper = await mountForm();
@@ -52,7 +52,7 @@ test("lưu thành công: gọi API với số thập phân, emit sau khi lưu, c
     fishWeight: 25.5,
   });
   expect(wrapper.emitted().weightAdded).toEqual([[saved]]);
-  expect(formValues(wrapper)).toEqual({ fishType: "Cá trắm", basketType: "Giỏ to", fishWeight: "" });
+  expect(formValues(wrapper)).toEqual({ fishType: "", basketType: "", fishWeight: "" });
   expect(wrapper.text()).toContain("Lưu số cân thành công!");
 });
 
