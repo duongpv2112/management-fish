@@ -70,7 +70,7 @@ onMounted(async () => {
   flex-direction: column;
   padding: 0 16px 20px;
   width: 100%;
-  height: 100vh;
+  flex: 1;
   background-color: $color-background;
 
   .management-fish__heading {
