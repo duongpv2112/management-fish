@@ -48,3 +48,8 @@
 - Mã trong `src/voice/`; hướng dẫn sử dụng trong README.
 - Sau khi lưu (cả nhập tay) chỉ xóa số cân, giữ loại cá và giỏ.
 - Chưa làm: kiểm thử trên điện thoại thật (Android Chrome, iPhone Safari) theo checklist của kế hoạch 04 Task 6.
+
+## Cập nhật 2026-09-26 — Phiên cân & tính tiền (kế hoạch 05)
+- Thanh phiên cân (chọn phiên, "Phiên mới" hỏi tên người mua, "Kết thúc phiên"); phiên đã kết thúc thì ẩn form thêm cân.
+- Bảng cân hiển thị trọng lượng thực (đã trừ giỏ); tab "Tiền" nhập đơn giá, ra thành tiền/tổng tiền, "In phiếu"; tab "Biểu đồ".
+- Form thêm cân hiện lý do lỗi từ server (ví dụ "Số cân phải lớn hơn trọng lượng giỏ (2 kg)!").
