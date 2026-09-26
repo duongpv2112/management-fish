@@ -104,7 +104,7 @@ const removeItem = async (item) => {
 <style lang="scss" scoped>
 .recent-weights {
   width: 100%;
-  margin-top: 16px;
+  margin-top: 0;
   border: 1px solid $color-border;
   border-radius: 8px;
   padding: 16px;

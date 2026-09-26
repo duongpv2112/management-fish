@@ -1,12 +1,6 @@
 <template>
   <div class="add-weight-container">
     <h1>Thêm cân nặng</h1>
-    <VoiceInput
-      ref="voiceInputRef"
-      :fishTypes="lstDataFishType"
-      :basketTypes="lstDataBasketType"
-      @parsed="handleVoiceParsed"
-    />
     <div class="add-weight-form">
       <div class="add-weight-field">
         <div class="add-weight-label">Loại cá</div>
@@ -53,6 +47,13 @@
       <div v-if="netPreview" class="net-preview" :class="{ 'net-preview--error': netPreview.isError }">
         {{ netPreview.text }}
       </div>
+      <!-- Micro đặt ngay dưới ô số cân (việc hay nói nhất là số cân) -->
+      <VoiceInput
+        ref="voiceInputRef"
+        :fishTypes="lstDataFishType"
+        :basketTypes="lstDataBasketType"
+        @parsed="handleVoiceParsed"
+      />
     </div>
     <div class="error-message" v-if="errorMessage">{{ errorMessage }}</div>
     <div class="success-message" v-if="successMessage">
@@ -380,7 +381,6 @@ onBeforeUnmount(clearUndo);
 <style lang="scss" scoped>
 .add-weight-container {
   width: 100%;
-  height: 100%;
   border: 1px solid $color-border;
   border-radius: 8px;
   padding: 16px;
@@ -487,6 +487,39 @@ onBeforeUnmount(clearUndo);
     &:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+    }
+
+    :deep(.button-control) {
+      font-size: 17px;
+    }
+  }
+}
+
+// Điện thoại: bỏ khung thẻ và tiêu đề cho gọn; nút Lưu ghim ngay trên thanh tab, trong tầm ngón cái
+@media (max-width: 899.98px) {
+  .add-weight-container {
+    padding: 0;
+    border: none;
+    box-shadow: none;
+    background-color: transparent;
+
+    h1 {
+      display: none;
+    }
+
+    .add-weight__save {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: calc(56px + 8px + env(safe-area-inset-bottom));
+      z-index: 700;
+      margin-top: 0;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+      :deep(.button-control) {
+        font-size: 18px;
+      }
     }
   }
 }
