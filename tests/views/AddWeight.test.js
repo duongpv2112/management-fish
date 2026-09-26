@@ -96,3 +96,14 @@ test("setFormValues điền số cân dạng số", async () => {
   await flushPromises();
   expect(formValues(wrapper)).toEqual({ fishType: "Cá trắm", basketType: "Giỏ to", fishWeight: "12.5" });
 });
+
+test("không dùng cache localStorage cho danh sách loại cá", async () => {
+  localStorage.setItem(
+    "fishTypes",
+    JSON.stringify({ data: [{ _id: "cu", fishName: "Cá cũ" }], timestamp: Date.now() })
+  );
+  const wrapper = await mountForm();
+  wrapper.vm.setFormValues({ fishType: "f1" });
+  await flushPromises();
+  expect(wrapper.find("#fishType").element.value).toBe("Cá trắm");
+});

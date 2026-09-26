@@ -1,10 +1,17 @@
 <template>
   <div class="catalog">
     <h1 class="catalog-title">Danh mục</h1>
+    <div class="catalog__container">
+      <FishTypeManager />
+      <BasketTypeManager />
+    </div>
   </div>
 </template>
 
-<script setup></script>
+<script setup>
+import FishTypeManager from "./components/FishTypeManager.vue";
+import BasketTypeManager from "./components/BasketTypeManager.vue";
+</script>
 
 <style lang="scss" scoped>
 .catalog {
@@ -18,6 +25,13 @@
     padding: 20px 0;
     font-weight: 600;
     color: $color-primary;
+  }
+
+  .catalog__container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-start;
   }
 }
 </style>

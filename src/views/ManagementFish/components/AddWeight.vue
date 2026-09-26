@@ -86,26 +86,9 @@ const getDataFishType = async () => {
   isLoading.value = true;
   errorMessage.value = "";
   try {
-    // Kiểm tra xem dữ liệu có được lưu trong localStorage không
-    const cachedFishData = localStorage.getItem('fishTypes');
-    if (cachedFishData) {
-      const parsedFishData = JSON.parse(cachedFishData);
-      // Kiểm tra xem dữ liệu trong cache có cũ hơn 10 phút không
-      if (Date.now() - parsedFishData.timestamp < 10 * 60 * 1000) {
-        lstDataFishType.value = parsedFishData.data;
-        isLoading.value = false;
-        return;
-      }
-    }
-    
-    // Nếu không có cache hợp lệ, lấy dữ liệu từ API
+    // Không cache: danh sách nhỏ và loại cá mới thêm ở trang Danh mục phải hiện ngay
     let result = await FishTypeAPI.getFishTypes();
     lstDataFishType.value = result.data;
-    // Lưu dữ liệu vào cache kèm theo thời gian
-    localStorage.setItem('fishTypes', JSON.stringify({
-      data: result.data,
-      timestamp: Date.now()
-    }));
   } catch (error) {
     errorMessage.value = "Không thể tải danh sách loại cá, vui lòng thử lại sau.";
     console.error("Lỗi khi tải danh sách loại cá:", error);
@@ -118,26 +101,9 @@ const getDataBasketType = async () => {
   isLoading.value = true;
   errorMessage.value = "";
   try {
-    // Kiểm tra xem dữ liệu có được lưu trong localStorage không
-    const cachedBasketData = localStorage.getItem('basketTypes');
-    if (cachedBasketData) {
-      const parsedBasketData = JSON.parse(cachedBasketData);
-      // Kiểm tra xem dữ liệu trong cache có cũ hơn 10 phút không
-      if (Date.now() - parsedBasketData.timestamp < 10 * 60 * 1000) {
-        lstDataBasketType.value = parsedBasketData.data;
-        isLoading.value = false;
-        return;
-      }
-    }
-    
-    // Nếu không có cache hợp lệ, lấy dữ liệu từ API
+    // Không cache: danh sách nhỏ và loại giỏ mới thêm ở trang Danh mục phải hiện ngay
     let result = await BasketTypeAPI.getBasketTypes();
     lstDataBasketType.value = result.data;
-    // Lưu dữ liệu vào cache kèm theo thời gian
-    localStorage.setItem('basketTypes', JSON.stringify({
-      data: result.data,
-      timestamp: Date.now()
-    }));
   } catch (error) {
     errorMessage.value = "Không thể tải danh sách loại giỏ, vui lòng thử lại sau.";
     console.error("Lỗi khi tải danh sách loại giỏ:", error);
