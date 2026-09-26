@@ -14,6 +14,7 @@ import FishTypeAPI from "@/services/fishTypeAPI";
 import ManagementFishViews from "@/views/ManagementFish/ManagementFishViews.vue";
 import AddWeight from "@/views/ManagementFish/components/AddWeight.vue";
 import StatisticData from "@/views/ManagementFish/components/StatisticData.vue";
+import WeightEditDialog from "@/views/ManagementFish/components/WeightEditDialog.vue";
 
 beforeEach(() => {
   localStorage.clear();
@@ -46,5 +47,31 @@ test("sau khi thêm cân: tải lại một lần và truyền dữ liệu xuố
 
   wrapper.findComponent(AddWeight).vm.$emit("weightAdded", { _id: "w1" });
   await flushPromises();
+  expect(FishTypeAPI.getDataFish).toHaveBeenCalledTimes(2);
+});
+
+test("chọn ô → mở hộp thoại sửa; lưu xong đóng hộp thoại và tải lại", async () => {
+  const data = [
+    {
+      _id: "f1",
+      fishName: "Cá trắm",
+      fishWeights: [25.5],
+      fishWeightItems: [{ _id: "w1", fishWeight: 25.5, basketType: null, createdAt: "2026-09-26T01:00:00Z" }],
+    },
+  ];
+  vi.mocked(FishTypeAPI.getDataFish).mockResolvedValue({ success: true, data });
+  const wrapper = mount(ManagementFishViews);
+  await flushPromises();
+
+  await wrapper.find("td.cell-editable").trigger("click");
+  await flushPromises();
+  const dialog = wrapper.findComponent(WeightEditDialog);
+  expect(dialog.exists()).toBe(true);
+  expect(dialog.props("item")).toMatchObject({ _id: "w1", fishType: "f1" });
+  expect(dialog.props("fishTypes").map((f) => f.fishName)).toEqual(["Cá trắm"]);
+
+  dialog.vm.$emit("saved");
+  await flushPromises();
+  expect(wrapper.findComponent(WeightEditDialog).exists()).toBe(false);
   expect(FishTypeAPI.getDataFish).toHaveBeenCalledTimes(2);
 });

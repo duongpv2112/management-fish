@@ -1,13 +1,16 @@
-import { get, post, put, remove } from "./baseAPI";
+import { post, put, remove } from "./baseAPI";
 
 const FishWeightAPI = {
-  // Hàm GET
   async saveFishWeight(data) {
-    try {
-      return await post("/fish-weights/createFishWeights", data);
-    } catch (error) {
-      throw error;
-    }
+    return await post("/fish-weights/createFishWeights", data);
+  },
+
+  async updateFishWeight(id, data) {
+    return await put(`/fish-weights/updateFishWeights/${id}`, data);
+  },
+
+  async deleteFishWeight(id) {
+    return await remove(`/fish-weights/deleteFishWeights/${id}`);
   },
 };
 

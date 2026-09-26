@@ -7,6 +7,7 @@
         <DataViewer
           ref="dataViewerRef"
           :isLoading="isLoading"
+          @editItem="openEditDialog"
         ></DataViewer>
       </div>
       <div class="add-data">
@@ -16,6 +17,16 @@
         <StatisticData :fishData="fishData"></StatisticData>
       </div>
     </div>
+
+    <WeightEditDialog
+      v-if="editingItem"
+      :item="editingItem"
+      :fishTypes="fishData"
+      :basketTypes="basketTypes"
+      @saved="handleEditDone"
+      @deleted="handleEditDone"
+      @close="editingItem = null"
+    />
   </div>
 </template>
 
@@ -27,6 +38,8 @@ import FishTypeAPI from "../../services/fishTypeAPI";
 import DataViewer from "./components/DataViewer.vue";
 import AddWeight from "./components/AddWeight.vue";
 import StatisticData from "./components/StatisticData.vue";
+import WeightEditDialog from "./components/WeightEditDialog.vue";
+import BasketTypeAPI from "@/services/basketTypeAPI";
 
 const dataViewerRef = ref(null);
 const isLoading = ref(false);
@@ -57,6 +70,25 @@ const loadData = async () => {
 
     isLoading.value = false;
   }
+};
+
+const editingItem = ref(null);
+const basketTypes = ref([]);
+
+// Mở hộp thoại sửa/xóa một lần cân; danh sách loại giỏ tải lúc mở để luôn mới nhất
+const openEditDialog = async (item) => {
+  editingItem.value = item;
+  try {
+    let result = await BasketTypeAPI.getBasketTypes();
+    basketTypes.value = result?.data ?? [];
+  } catch (error) {
+    console.error("Lỗi khi tải danh sách loại giỏ:", error);
+  }
+};
+
+const handleEditDone = async () => {
+  editingItem.value = null;
+  await loadData();
 };
 
 onMounted(async () => {

@@ -36,8 +36,12 @@
           <td :colspan="Math.max(1, filteredData.length)" class="empty-row">Chưa có dữ liệu cân cá.</td>
         </tr>
         <tr v-for="row in paginatedRows">
-          <td v-for="(fishType, fishTypeIndex) in filteredData">
-            {{ fishType.fishWeights[row - 1] }}
+          <td
+            v-for="(fishType, fishTypeIndex) in filteredData"
+            :class="{ 'cell-editable': fishType.items[row - 1]?._id }"
+            @click="handleClickCell(fishType, row)"
+          >
+            {{ fishType.items[row - 1]?.fishWeight }}
           </td>
         </tr>
       </tbody>
@@ -72,6 +76,8 @@ defineProps({
   },
 });
 
+const emit = defineEmits(["editItem"]);
+
 const isShowTable = ref(false);
 const dataOfTable = ref([]);
 const numberRowsOfTable = ref(0);
@@ -82,9 +88,15 @@ const currentPage = ref(1);
 const initDataTable = (data, numberRows) => {
   isShowTable.value = true;
   // Đảo ngược thứ tự các hàng để hiển thị bản ghi mới nhất lên đầu tiên (không sửa mảng đầu vào)
+  // items: lấy từ fishWeightItems (có _id để sửa/xóa), nếu không có thì dựng từ fishWeights
   dataOfTable.value = (data ?? []).map((fishType) => ({
     ...fishType,
-    fishWeights: fishType.fishWeights.slice().reverse(),
+    items: (
+      fishType.fishWeightItems ??
+      fishType.fishWeights.map((fishWeight) => ({ fishWeight }))
+    )
+      .slice()
+      .reverse(),
   }));
   numberRowsOfTable.value = numberRows;
   if (currentPage.value > totalPages.value) {
@@ -96,6 +108,13 @@ const initDataTable = (data, numberRows) => {
 watch([searchTerm, itemsPerPage], () => {
   currentPage.value = 1;
 });
+
+// Click vào ô có lần cân → báo component cha mở hộp thoại sửa/xóa
+const handleClickCell = (fishType, row) => {
+  const item = fishType.items[row - 1];
+  if (!item?._id) return;
+  emit("editItem", { ...item, fishType: fishType._id, fishName: fishType.fishName });
+};
 
 // Định nghĩa sự kiện để component cha có thể gọi cập nhật
 defineExpose({ initDataTable });
@@ -242,6 +261,18 @@ const paginatedRows = computed(() => {
 
     & tr:hover {
       background-color: $color-hover;
+    }
+
+    & td.cell-editable {
+      cursor: pointer;
+
+      &:hover {
+        background-color: darken($color-hover, 5%);
+      }
+    }
+
+    & td.empty-row {
+      text-align: center;
     }
 
     & th {
