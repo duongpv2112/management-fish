@@ -53,3 +53,7 @@
 - Thanh phiên cân (chọn phiên, "Phiên mới" hỏi tên người mua, "Kết thúc phiên"); phiên đã kết thúc thì ẩn form thêm cân.
 - Bảng cân hiển thị trọng lượng thực (đã trừ giỏ); tab "Tiền" nhập đơn giá, ra thành tiền/tổng tiền, "In phiếu"; tab "Biểu đồ".
 - Form thêm cân hiện lý do lỗi từ server (ví dụ "Số cân phải lớn hơn trọng lượng giỏ (2 kg)!").
+
+## Cập nhật 2026-09-26 — Nhật ký & đăng nhập (kế hoạch 06)
+- Trang "Đăng nhập" (`/#/dang-nhap`), mọi trang khác cần đăng nhập; hết phiên thì báo "Phiên đăng nhập đã hết hạn" và quay lại đúng trang cũ sau khi đăng nhập; nút "Đăng xuất".
+- Trang "Nhật ký" (`/#/nhat-ky`): lọc theo loại cá, phân trang, dòng lỗi tô đỏ.
