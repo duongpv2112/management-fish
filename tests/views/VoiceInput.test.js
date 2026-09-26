@@ -51,9 +51,15 @@ const say = async (text) => {
   await flushPromises();
 };
 
+// Lưới ChoiceGrid: giá trị đang chọn là nút aria-pressed="true"
+const selectedText = (wrapper, id) => {
+  const node = wrapper.find(`#${id} [aria-pressed="true"] .choice-grid__text`);
+  return node.exists() ? node.text() : "";
+};
+
 const formValues = (wrapper) => ({
-  fishType: wrapper.find("#fishType").element.value,
-  basketType: wrapper.find("#basketType").element.value,
+  fishType: selectedText(wrapper, "fishType"),
+  basketType: selectedText(wrapper, "basketType"),
   fishWeight: wrapper.find("#fishWeight").element.value,
 });
 
@@ -79,7 +85,7 @@ test("nói đủ 3 trường thì điền form nhưng chưa lưu", async () => {
   expect(wrapper.text()).toContain("Đã nghe: trắm giỏ to 25,5");
 });
 
-test('nói "lưu" thì lưu; sau khi lưu giữ cá và giỏ, xóa số cân; nói tiếp "30 lưu" lưu lần 2', async () => {
+test('nói "lưu" thì lưu; sau khi lưu xóa hết form; nói tiếp "mè giỏ to 30 lưu" lưu lần 2', async () => {
   const wrapper = await mountForm();
   await say("trắm giỏ to 25,5");
   await say("lưu");
@@ -89,12 +95,12 @@ test('nói "lưu" thì lưu; sau khi lưu giữ cá và giỏ, xóa số cân; n
     basketType: "b1",
     fishWeight: 25.5,
   });
-  expect(formValues(wrapper)).toEqual({ fishType: "Cá trắm", basketType: "Giỏ to", fishWeight: "" });
+  expect(formValues(wrapper)).toEqual({ fishType: "", basketType: "", fishWeight: "" });
 
-  await say("30 lưu");
+  await say("mè giỏ to 30 lưu");
   expect(FishWeightAPI.saveFishWeight).toHaveBeenCalledTimes(2);
   expect(FishWeightAPI.saveFishWeight).toHaveBeenLastCalledWith({
-    fishType: "f1",
+    fishType: "f2",
     basketType: "b1",
     fishWeight: 30,
   });
@@ -190,4 +196,13 @@ describe("đọc xác nhận", () => {
     expect(FishWeightAPI.saveFishWeight).toHaveBeenCalledTimes(1);
     expect(speakMock).not.toHaveBeenCalled();
   });
+});
+
+test("server từ chối (số cân <= giỏ) → hiện đúng message của server", async () => {
+  vi.mocked(FishWeightAPI.saveFishWeight).mockRejectedValue(
+    new Error("Số cân phải lớn hơn trọng lượng giỏ (2 kg)!")
+  );
+  const wrapper = await mountForm();
+  await say("trắm giỏ to 2 lưu");
+  expect(wrapper.find(".error-message").text()).toBe("Số cân phải lớn hơn trọng lượng giỏ (2 kg)!");
 });

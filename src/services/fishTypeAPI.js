@@ -6,8 +6,9 @@ const FishTypeAPI = {
     return await get("/fish-types/getFishTypes");
   },
 
-  async getDataFish() {
-    return await get("/fish-types/getDataFish");
+  // Không truyền sessionId thì server lấy phiên đang mở
+  async getDataFish(sessionId) {
+    return await get("/fish-types/getDataFish", sessionId ? { params: { sessionId } } : {});
   },
 
   async createFishType(data) {

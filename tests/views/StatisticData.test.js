@@ -52,3 +52,24 @@ test("hủy biểu đồ khi unmount", async () => {
   wrapper.unmount();
   expect(chartMock.destroy).toHaveBeenCalledTimes(1);
 });
+
+test("biểu đồ dùng trọng lượng thực nếu có", async () => {
+  const wrapper = mount(StatisticData, { props: { fishData: [] } });
+  await flushPromises();
+  await wrapper.setProps({
+    fishData: [
+      {
+        fishName: "Cá trắm",
+        fishWeights: [25.5, 12],
+        fishWeightItems: [
+          { fishWeight: 25.5, netWeight: 23.5 },
+          { fishWeight: 12, netWeight: 10 },
+        ],
+      },
+    ],
+  });
+  await flushPromises();
+  const config = chartMock.ctor.mock.calls[0][1];
+  expect(config.data.datasets[0].data).toEqual([33.5]);
+  expect(config.data.datasets[0].label).toBe("Trọng lượng thực (kg)");
+});
