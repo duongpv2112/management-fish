@@ -2,6 +2,7 @@
   <div class="add-weight-container">
     <h1>Thêm cân nặng</h1>
     <VoiceInput
+      ref="voiceInputRef"
       :fishTypes="lstDataFishType"
       :basketTypes="lstDataBasketType"
       @parsed="handleVoiceParsed"
@@ -82,6 +83,7 @@ const fishWeightValue = ref(null);
 const errorMessage = ref("");
 const successMessage = ref("");
 const isLoading = ref(false);
+const voiceInputRef = ref(null);
 
 const initDateForm = async () => {
   await getDataFishType();
@@ -208,7 +210,14 @@ const handleVoiceParsed = async ({ fishTypeId, basketTypeId, weight, command }) 
     errorMessage.value = "Chưa có số cân";
     return;
   }
-  await save();
+
+  // Ghi lại trước khi lưu vì lưu thành công sẽ xóa số cân
+  const fishName = lstDataFishType.value.find((item) => item._id === fishTypeValue.value)?.fishName ?? "";
+  const weightText = String(common.parseDecimal(fishWeightValue.value)).replace(".", ",");
+  const ok = await save();
+  voiceInputRef.value?.announce(
+    ok ? `Đã lưu ${fishName.replace(/^cá\s+/i, "")} ${weightText} cân` : "Lưu thất bại"
+  );
 };
 
 defineExpose({ setFormValues, save });

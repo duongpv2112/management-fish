@@ -1,4 +1,4 @@
-import { test, expect, vi, beforeEach } from "vitest";
+import { test, expect, vi, beforeEach, describe } from "vitest";
 import { ref } from "vue";
 import { mount, flushPromises } from "@vue/test-utils";
 
@@ -14,10 +14,15 @@ vi.mock("@/voice/useSpeechRecognition", () => ({
       errorMessage: ref(""),
       start: vi.fn(),
       stop: vi.fn(),
+      pause: vi.fn(),
+      resume: vi.fn(),
     };
     return speech.api;
   },
 }));
+
+const speakMock = vi.hoisted(() => vi.fn((text, { onEnd } = {}) => onEnd?.()));
+vi.mock("@/voice/speak", () => ({ speak: speakMock }));
 
 vi.mock("@/services/fishWeightAPI", () => ({ default: { saveFishWeight: vi.fn() } }));
 vi.mock("@/services/fishTypeAPI", () => ({
@@ -60,6 +65,8 @@ const mountForm = async () => {
 
 beforeEach(() => {
   speech.isSupported = true;
+  localStorage.clear();
+  speakMock.mockClear();
   vi.mocked(FishWeightAPI.saveFishWeight).mockReset();
   vi.mocked(FishWeightAPI.saveFishWeight).mockResolvedValue({ success: true, data: {} });
 });
@@ -140,4 +147,47 @@ test("trình duyệt không hỗ trợ: ẩn nút micro và hiện chú thích",
   expect(wrapper.text()).toContain(
     "Trình duyệt này chưa hỗ trợ nhập bằng giọng nói, hãy dùng Chrome."
   );
+});
+
+describe("đọc xác nhận", () => {
+  test("lưu bằng giọng nói thành công → đọc tên cá bỏ tiền tố và số có dấu phẩy; tạm dừng nghe khi đọc", async () => {
+    const wrapper = await mountForm();
+    await say("trắm giỏ to 25,5 lưu");
+    expect(speakMock).toHaveBeenCalledTimes(1);
+    expect(speakMock.mock.calls[0][0]).toBe("Đã lưu trắm 25,5 cân");
+    expect(speech.api.pause).toHaveBeenCalledTimes(1);
+    expect(speech.api.resume).toHaveBeenCalledTimes(1);
+    expect(wrapper.find(".voice-input__readback input").element.checked).toBe(true);
+  });
+
+  test("lưu thất bại → đọc 'Lưu thất bại'", async () => {
+    vi.mocked(FishWeightAPI.saveFishWeight).mockRejectedValue(new Error("x"));
+    await mountForm();
+    await say("trắm giỏ to 25 lưu");
+    expect(speakMock.mock.calls[0][0]).toBe("Lưu thất bại");
+  });
+
+  test("tắt công tắc → không đọc, lưu lựa chọn vào localStorage", async () => {
+    const wrapper = await mountForm();
+    await wrapper.find(".voice-input__readback input").setValue(false);
+    expect(localStorage.getItem("voiceReadback")).toBe("false");
+    await say("trắm giỏ to 25 lưu");
+    expect(FishWeightAPI.saveFishWeight).toHaveBeenCalledTimes(1);
+    expect(speakMock).not.toHaveBeenCalled();
+  });
+
+  test("nhớ lựa chọn tắt từ localStorage", async () => {
+    localStorage.setItem("voiceReadback", "false");
+    const wrapper = await mountForm();
+    expect(wrapper.find(".voice-input__readback input").element.checked).toBe(false);
+  });
+
+  test("bấm nút Lưu bằng tay → không đọc", async () => {
+    const wrapper = await mountForm();
+    await say("trắm giỏ to 25");
+    await wrapper.find("#btnSaveFishWeight").trigger("click");
+    await flushPromises();
+    expect(FishWeightAPI.saveFishWeight).toHaveBeenCalledTimes(1);
+    expect(speakMock).not.toHaveBeenCalled();
+  });
 });

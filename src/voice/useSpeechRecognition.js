@@ -21,6 +21,8 @@ export const useSpeechRecognition = ({ lang = "vi-VN", onFinal } = {}) => {
   const errorMessage = ref("");
 
   let recognition = null;
+  // Tạm dừng (ví dụ khi app đang đọc xác nhận) mà vẫn giữ chế độ nghe
+  let isPaused = false;
 
   const createRecognition = () => {
     const instance = new RecognitionClass();
@@ -64,7 +66,7 @@ export const useSpeechRecognition = ({ lang = "vi-VN", onFinal } = {}) => {
     instance.onend = () => {
       interimText.value = "";
       // Chrome tự dừng sau vài giây im lặng: bật lại nếu vẫn đang ở chế độ nghe
-      if (isListening.value) startRecognition();
+      if (isListening.value && !isPaused) startRecognition();
     };
 
     return instance;
@@ -83,6 +85,7 @@ export const useSpeechRecognition = ({ lang = "vi-VN", onFinal } = {}) => {
     if (!isSupported || isListening.value) return;
     if (!recognition) recognition = createRecognition();
     errorMessage.value = "";
+    isPaused = false;
     isListening.value = true;
     startRecognition();
   };
@@ -90,11 +93,26 @@ export const useSpeechRecognition = ({ lang = "vi-VN", onFinal } = {}) => {
   const stop = () => {
     if (!recognition) return;
     isListening.value = false;
+    isPaused = false;
     interimText.value = "";
     recognition.stop();
   };
 
+  // Tạm dừng nhận dạng để app không tự nghe chính giọng đọc của nó
+  const pause = () => {
+    if (!recognition || !isListening.value || isPaused) return;
+    isPaused = true;
+    interimText.value = "";
+    recognition.stop();
+  };
+
+  const resume = () => {
+    if (!isPaused) return;
+    isPaused = false;
+    if (isListening.value) startRecognition();
+  };
+
   onBeforeUnmount(stop);
 
-  return { isSupported, isListening, interimText, errorMessage, start, stop };
+  return { isSupported, isListening, interimText, errorMessage, start, stop, pause, resume };
 };

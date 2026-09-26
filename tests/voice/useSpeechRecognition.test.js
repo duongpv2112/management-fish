@@ -128,3 +128,24 @@ test("unmount thì dừng nghe", () => {
   expect(recognition().stop).toHaveBeenCalled();
   expect(api.isListening.value).toBe(false);
 });
+
+test("pause tạm dừng không tự bật lại; resume nghe lại", () => {
+  const { api, recognition } = setup({ onFinal: vi.fn() });
+  api.start();
+  api.pause();
+  expect(recognition().stop).toHaveBeenCalledTimes(1);
+  expect(recognition().start).toHaveBeenCalledTimes(1);
+  expect(api.isListening.value).toBe(true);
+
+  api.resume();
+  expect(recognition().start).toHaveBeenCalledTimes(2);
+});
+
+test("resume khi đã tắt nghe thì không làm gì", () => {
+  const { api, recognition } = setup({ onFinal: vi.fn() });
+  api.start();
+  api.pause();
+  api.stop();
+  api.resume();
+  expect(recognition().start).toHaveBeenCalledTimes(1);
+});

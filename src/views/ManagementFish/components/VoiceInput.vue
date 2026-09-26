@@ -15,6 +15,10 @@
       <div v-if="!isSupported" class="voice-input__note">
         Trình duyệt này chưa hỗ trợ nhập bằng giọng nói, hãy dùng Chrome.
       </div>
+      <label v-if="isSupported" class="voice-input__readback">
+        <input type="checkbox" :checked="isReadbackOn" @change="setReadback($event.target.checked)" />
+        Đọc xác nhận
+      </label>
       <div v-if="errorMessage" class="voice-input__error">{{ errorMessage }}</div>
       <div v-if="interimText" class="voice-input__interim">{{ interimText }}</div>
       <div v-else-if="lastTranscript" class="voice-input__heard">
@@ -28,11 +32,12 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import "@mdi/font/css/materialdesignicons.css";
 
 import { useSpeechRecognition } from "@/voice/useSpeechRecognition";
 import { parseWeightUtterance } from "@/voice/parseWeightUtterance";
+import { speak } from "@/voice/speak";
 
 const props = defineProps({
   fishTypes: {
@@ -60,7 +65,7 @@ const handleFinal = (text) => {
   emit("parsed", result);
 };
 
-const { isSupported, isListening, interimText, errorMessage, start, stop } =
+const { isSupported, isListening, interimText, errorMessage, start, stop, pause, resume } =
   useSpeechRecognition({ lang: "vi-VN", onFinal: handleFinal });
 
 const toggleListening = () => {
@@ -68,7 +73,43 @@ const toggleListening = () => {
   else start();
 };
 
-defineExpose({ isListening, start, stop });
+// Công tắc "Đọc xác nhận": mặc định bật, nhớ trong localStorage
+const READBACK_KEY = "voiceReadback";
+const readStoredReadback = () => {
+  try {
+    return localStorage.getItem(READBACK_KEY) !== "false";
+  } catch {
+    return true;
+  }
+};
+const isReadbackOn = ref(readStoredReadback());
+
+const setReadback = (value) => {
+  isReadbackOn.value = value;
+  try {
+    localStorage.setItem(READBACK_KEY, String(value));
+  } catch {
+    // Trình duyệt chặn localStorage: chỉ nhớ trong phiên hiện tại
+  }
+};
+
+// Đọc câu xác nhận; tạm dừng nghe trong lúc đọc để không tự nghe chính mình
+const announce = (text) => {
+  if (!isReadbackOn.value) return;
+  pause();
+  speak(text, { onEnd: resume });
+};
+
+onMounted(() => {
+  // Chrome tải danh sách giọng đọc bất đồng bộ: gọi trước để lần đọc đầu có giọng tiếng Việt
+  try {
+    window.speechSynthesis?.getVoices();
+  } catch {
+    // bỏ qua
+  }
+});
+
+defineExpose({ isListening, start, stop, announce });
 </script>
 
 <style lang="scss" scoped>
@@ -105,6 +146,14 @@ defineExpose({ isListening, start, stop });
     min-width: 0;
     font-size: 13px;
     color: $color-text-primary;
+
+    .voice-input__readback {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      user-select: none;
+    }
 
     .voice-input__interim {
       font-style: italic;
