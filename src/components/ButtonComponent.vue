@@ -189,4 +189,17 @@ const handleClick = () => {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+// Điện thoại: nút đủ cao để chạm
+@media (max-width: 899.98px) {
+  .cp-button {
+    .cp-button__content {
+      min-height: 44px;
+    }
+
+    .button-control {
+      font-size: 16px;
+    }
+  }
+}
 </style>

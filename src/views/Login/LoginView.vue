@@ -142,4 +142,19 @@ const submit = async () => {
     }
   }
 }
+
+// Điện thoại: ô mật khẩu và nút đăng nhập cao 48px, chữ 16px
+@media (max-width: 899.98px) {
+  .login {
+    .login__card h1 {
+      font-size: 17px;
+    }
+
+    .login__input,
+    .login__button {
+      min-height: 48px;
+      font-size: 16px;
+    }
+  }
+}
 </style>

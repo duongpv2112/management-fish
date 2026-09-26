@@ -189,4 +189,17 @@ const typeInputEnum = ref({
     font-weight: 400;
   }
 }
+
+// Điện thoại: ô nhập đủ cao để chạm, chữ 16px để iPhone không tự phóng to
+@media (max-width: 899.98px) {
+  .cp-input {
+    .cp-input__control {
+      min-height: 44px;
+    }
+
+    .input-control {
+      font-size: 16px;
+    }
+  }
+}
 </style>

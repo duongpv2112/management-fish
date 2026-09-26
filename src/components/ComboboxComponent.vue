@@ -543,4 +543,24 @@ const keyPressCode = ref({
     opacity: 1;
   }
 }
+
+// Điện thoại: ô chọn đủ cao để chạm, chữ 16px để iPhone không tự phóng to
+@media (max-width: 899.98px) {
+  .cp-combobox {
+    .cp-combobox__control {
+      min-height: 44px;
+    }
+
+    .combobox-input {
+      font-size: 16px;
+    }
+
+    .select-item {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      font-size: 16px;
+    }
+  }
+}
 </style>

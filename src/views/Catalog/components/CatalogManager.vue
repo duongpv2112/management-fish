@@ -317,4 +317,12 @@ onMounted(loadItems);
     }
   }
 }
+
+// Điện thoại: ô nhập và nút trong danh mục cao 48px
+@media (max-width: 899.98px) {
+  :deep(.cp-input__control),
+  :deep(.cp-button__content) {
+    min-height: 48px;
+  }
+}
 </style>
