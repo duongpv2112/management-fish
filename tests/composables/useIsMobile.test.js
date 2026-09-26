@@ -50,3 +50,37 @@ test("không có matchMedia → máy tính", () => {
   window.matchMedia = undefined;
   expect(mountProbe().vm.isMobile).toBe(false);
 });
+
+test("đang in (beforeprint → afterprint) thì bỏ qua thay đổi cỡ trang: không đổi bố cục giữa lúc in", async () => {
+  const { mql, fire } = mockMatchMedia(false);
+  const wrapper = mountProbe();
+
+  window.dispatchEvent(new Event("beforeprint"));
+  mql.matches = true;
+  fire(true);
+  await nextTick();
+  expect(wrapper.vm.isMobile).toBe(false);
+
+  mql.matches = false;
+  window.dispatchEvent(new Event("afterprint"));
+  await nextTick();
+  expect(wrapper.vm.isMobile).toBe(false);
+
+  // In xong: thay đổi kích thước thật lại có tác dụng
+  fire(true);
+  await nextTick();
+  expect(wrapper.vm.isMobile).toBe(true);
+  wrapper.unmount();
+});
+
+test("sau khi in, lấy lại giá trị hiện tại của màn hình", async () => {
+  const { mql, fire } = mockMatchMedia(false);
+  const wrapper = mountProbe();
+  window.dispatchEvent(new Event("beforeprint"));
+  fire(true);
+  mql.matches = true;
+  window.dispatchEvent(new Event("afterprint"));
+  await nextTick();
+  expect(wrapper.vm.isMobile).toBe(true);
+  wrapper.unmount();
+});

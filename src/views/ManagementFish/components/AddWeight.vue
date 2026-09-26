@@ -12,7 +12,8 @@
           textField="fishName"
           :ranking="fishRanking"
           :maxVisible="5"
-          emptyText="Chưa có loại cá — thêm ở trang Danh mục"
+          :emptyText="catalogEmptyText(fishLoadState, 'cá')"
+          :showCatalogLink="fishLoadState === 'ok'"
           @update="selectFishType"
         />
       </div>
@@ -28,7 +29,8 @@
           :subText="basketSubText"
           :ranking="basketRanking"
           :maxVisible="4"
-          emptyText="Chưa có loại giỏ — thêm ở trang Danh mục"
+          :emptyText="catalogEmptyText(basketLoadState, 'giỏ')"
+          :showCatalogLink="basketLoadState === 'ok'"
           @update="selectBasketType"
         />
       </div>
@@ -149,19 +151,33 @@ const undoLastSave = async () => {
   }
 };
 
+// Trạng thái tải danh mục: "loading" | "error" | "ok" — để lưới rỗng không bảo "thêm ở Danh mục" khi chỉ là đang tải/tải lỗi
+const fishLoadState = ref("loading");
+const basketLoadState = ref("loading");
+
+const catalogEmptyText = (state, name) => {
+  if (state === "loading") return "Đang tải…";
+  if (state === "error") return `Không tải được danh sách loại ${name}.`;
+  return `Chưa có loại ${name} — thêm ở trang Danh mục`;
+};
+
 const initDateForm = async () => {
+  // Xóa lỗi một lần ở đây; từng hàm tải không xóa lỗi của nhau
+  errorMessage.value = "";
   await getDataFishType();
   await getDataBasketType();
 };
 
 const getDataFishType = async () => {
   isLoading.value = true;
-  errorMessage.value = "";
+  fishLoadState.value = "loading";
   try {
     // Không cache: danh sách nhỏ và loại cá mới thêm ở trang Danh mục phải hiện ngay
     let result = await FishTypeAPI.getFishTypes();
-    lstDataFishType.value = result.data;
+    lstDataFishType.value = result.data ?? [];
+    fishLoadState.value = "ok";
   } catch (error) {
+    fishLoadState.value = "error";
     errorMessage.value = "Không thể tải danh sách loại cá, vui lòng thử lại sau.";
     console.error("Lỗi khi tải danh sách loại cá:", error);
   } finally {
@@ -171,13 +187,16 @@ const getDataFishType = async () => {
 
 const getDataBasketType = async () => {
   isLoading.value = true;
-  errorMessage.value = "";
+  basketLoadState.value = "loading";
   try {
     // Không cache: danh sách nhỏ và loại giỏ mới thêm ở trang Danh mục phải hiện ngay
     let result = await BasketTypeAPI.getBasketTypes();
-    lstDataBasketType.value = result.data;
+    lstDataBasketType.value = result.data ?? [];
+    basketLoadState.value = "ok";
   } catch (error) {
-    errorMessage.value = "Không thể tải danh sách loại giỏ, vui lòng thử lại sau.";
+    basketLoadState.value = "error";
+    // Giữ lỗi tải loại cá nếu có (lỗi nào cũng chặn việc lưu)
+    errorMessage.value ||= "Không thể tải danh sách loại giỏ, vui lòng thử lại sau.";
     console.error("Lỗi khi tải danh sách loại giỏ:", error);
   } finally {
     isLoading.value = false;
@@ -505,6 +524,13 @@ onBeforeUnmount(clearUndo);
 
     h1 {
       display: none;
+    }
+
+    // Hoàn tác hay phải bấm vội ngay sau khi lưu nhầm → vùng chạm đủ lớn
+    .success-message .btn-undo {
+      min-height: 44px;
+      padding: 0 16px;
+      font-size: 16px;
     }
 
     .add-weight__save {

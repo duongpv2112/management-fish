@@ -267,3 +267,29 @@ describe("Lưới chọn cá/giỏ", () => {
     expect(FishWeightAPI.saveFishWeight).toHaveBeenCalledTimes(1);
   });
 });
+
+test("ô số cân mở bàn phím số trên điện thoại", async () => {
+  const wrapper = await mountForm();
+  expect(wrapper.find("#fishWeight").attributes("inputmode")).toBe("decimal");
+});
+
+test("tải danh mục cá lỗi → báo lỗi tải (không bị xóa khi tải giỏ xong), lưới không bảo đi thêm cá", async () => {
+  vi.mocked(FishTypeAPI.getFishTypes).mockRejectedValueOnce(new Error("Network"));
+  const wrapper = await mountForm();
+  expect(wrapper.find(".error-message").text()).toBe("Không thể tải danh sách loại cá, vui lòng thử lại sau.");
+  const empty = wrapper.find("#fishType .choice-grid__empty");
+  expect(empty.text()).toBe("Không tải được danh sách loại cá.");
+  expect(empty.find("a").exists()).toBe(false);
+  expect(wrapper.find("#btnSaveFishWeight").element.disabled).toBe(true);
+});
+
+test("đang tải danh mục → lưới hiện 'Đang tải…' thay vì bảo thêm ở Danh mục", async () => {
+  let resolveFish;
+  vi.mocked(FishTypeAPI.getFishTypes).mockReturnValueOnce(new Promise((resolve) => (resolveFish = resolve)));
+  const wrapper = mount(AddWeight);
+  await flushPromises();
+  expect(wrapper.find("#fishType .choice-grid__empty").text()).toBe("Đang tải…");
+  resolveFish({ data: [{ _id: "f1", fishName: "Cá trắm" }] });
+  await flushPromises();
+  expect(wrapper.find("#fishType .choice-grid__item").text()).toBe("Cá trắm");
+});

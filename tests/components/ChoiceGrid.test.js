@@ -126,3 +126,11 @@ test("disabled → mọi nút bị khóa", () => {
   expect(wrapper.findAll("button").every((button) => button.element.disabled)).toBe(true);
   wrapper.unmount();
 });
+
+test("showCatalogLink = false → thông báo trống không kèm liên kết", () => {
+  const wrapper = mountGrid({ items: [], ranking: [], emptyText: "Đang tải…", showCatalogLink: false });
+  const empty = wrapper.find(".choice-grid__empty");
+  expect(empty.text()).toBe("Đang tải…");
+  expect(empty.find("a").exists()).toBe(false);
+  wrapper.unmount();
+});

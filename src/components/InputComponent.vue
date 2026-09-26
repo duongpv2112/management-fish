@@ -17,6 +17,7 @@
         :value="modelValue"
         :placeholder="placeholderText"
         :disabled="disabled"
+        :inputmode="resolvedInputmode"
         @input="handleChangeInput"
         @keydown="handleKeyPress"
         @focus="handleFocusInput"
@@ -27,7 +28,7 @@
   </div>
 </template>
 <script setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
 
 const props = defineProps({
   idControl: {
@@ -61,6 +62,11 @@ const props = defineProps({
   typeInput: {
     type: Number,
     default: 2,
+  },
+  // Kiểu bàn phím trên điện thoại; ô số (typeInput 1) mặc định "decimal"
+  inputmode: {
+    type: String,
+    default: "",
   },
   disabled: {
     type: Boolean,
@@ -126,6 +132,12 @@ const handleKeyPress = ($event) => {
 const typeInputEnum = ref({
   NumberType: 1,
   TextType: 2,
+});
+
+// Ô số trên điện thoại mở bàn phím số (có dấu thập phân) thay vì bàn phím chữ
+const resolvedInputmode = computed(() => {
+  if (props.inputmode) return props.inputmode;
+  return props.typeInput === typeInputEnum.value.NumberType ? "decimal" : undefined;
 });
 </script>
 <style lang="scss" scoped>

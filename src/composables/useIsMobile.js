@@ -12,13 +12,31 @@ export const useIsMobile = () => {
 
   const mediaQuery = window.matchMedia(MOBILE_QUERY);
   isMobile.value = mediaQuery.matches;
+
+  // Khi in, trình duyệt đo media query theo khổ giấy (A4 dọc < 900px) → không được đổi bố cục giữa lúc in,
+  // nếu không bảng tiền trên máy tính bị gỡ và phiếu in ra trang trắng
+  let isPrinting = false;
   const handleChange = (event) => {
-    isMobile.value = event.matches;
+    if (!isPrinting) isMobile.value = event.matches;
   };
+  const handleBeforePrint = () => {
+    isPrinting = true;
+  };
+  const handleAfterPrint = () => {
+    isPrinting = false;
+    isMobile.value = mediaQuery.matches;
+  };
+
   mediaQuery.addEventListener("change", handleChange);
+  window.addEventListener("beforeprint", handleBeforePrint);
+  window.addEventListener("afterprint", handleAfterPrint);
 
   if (getCurrentInstance()) {
-    onBeforeUnmount(() => mediaQuery.removeEventListener("change", handleChange));
+    onBeforeUnmount(() => {
+      mediaQuery.removeEventListener("change", handleChange);
+      window.removeEventListener("beforeprint", handleBeforePrint);
+      window.removeEventListener("afterprint", handleAfterPrint);
+    });
   }
   return isMobile;
 };

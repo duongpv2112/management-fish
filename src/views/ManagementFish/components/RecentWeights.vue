@@ -201,4 +201,13 @@ const removeItem = async (item) => {
     }
   }
 }
+
+// Điện thoại: nút Sửa/Xóa đủ cao để chạm
+@media (max-width: 899.98px) {
+  .recent-weights .recent-weight .recent-weight__actions button {
+    min-height: 44px;
+    padding: 0 14px;
+    font-size: 15px;
+  }
+}
 </style>

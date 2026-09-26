@@ -2,7 +2,7 @@
   <div :id="idPrefix" class="choice-grid">
     <div v-if="items.length === 0" class="choice-grid__empty">
       {{ emptyText }}
-      <a href="#/danh-muc">Mở Danh mục</a>
+      <a v-if="showCatalogLink" href="#/danh-muc">Mở Danh mục</a>
     </div>
     <div v-else class="choice-grid__grid">
       <button
@@ -101,6 +101,11 @@ const props = defineProps({
   emptyText: {
     type: String,
     default: "",
+  },
+  // Chỉ gợi ý mở Danh mục khi danh mục thật sự trống (không phải đang tải hay tải lỗi)
+  showCatalogLink: {
+    type: Boolean,
+    default: true,
   },
   disabled: {
     type: Boolean,
