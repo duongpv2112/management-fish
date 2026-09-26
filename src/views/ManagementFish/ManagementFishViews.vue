@@ -2,6 +2,13 @@
   <div class="management-fish">
     <div class="management-fish__heading">Quản lý cân cá nhà Đặng Ánh</div>
     <div class="management-fish__container">
+      <SessionBar
+        :sessions="sessions"
+        :selectedId="selectedSessionId"
+        @select="selectSession"
+        @created="handleSessionChanged"
+        @closed="handleSessionChanged"
+      />
       <div class="viewer-data">
         <div class="load-error" v-if="loadError">{{ loadError }}</div>
         <DataViewer
@@ -11,7 +18,10 @@
         ></DataViewer>
       </div>
       <div class="add-data">
-        <AddWeight @weightAdded="loadData"></AddWeight>
+        <div v-if="isSessionClosed" class="session-closed">
+          Phiên đã kết thúc. Chọn phiên đang mở hoặc bấm "Phiên mới" để cân tiếp.
+        </div>
+        <AddWeight v-else @weightAdded="handleWeightAdded"></AddWeight>
       </div>
       <div class="statistic-data">
         <StatisticData :fishData="fishData"></StatisticData>
@@ -31,10 +41,12 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 
 import FishTypeAPI from "../../services/fishTypeAPI";
+import WeighSessionAPI from "@/services/weighSessionAPI";
 
+import SessionBar from "./components/SessionBar.vue";
 import DataViewer from "./components/DataViewer.vue";
 import AddWeight from "./components/AddWeight.vue";
 import StatisticData from "./components/StatisticData.vue";
@@ -47,12 +59,35 @@ const isLoading = ref(false);
 const fishData = ref([]);
 const loadError = ref("");
 
+const sessions = ref([]);
+const selectedSessionId = ref(null);
+const selectedSession = computed(() =>
+  sessions.value.find((session) => session._id === selectedSessionId.value)
+);
+// Phiên đã kết thúc thì chỉ xem, không thêm/sửa/xóa lần cân
+const isSessionClosed = computed(() => selectedSession.value?.status === "closed");
+
+// Tải danh sách phiên; giữ phiên đang chọn nếu còn, không thì chọn phiên đang mở (hoặc mới nhất)
+const loadSessions = async ({ selectOpen = false } = {}) => {
+  try {
+    let result = await WeighSessionAPI.getWeighSessions();
+    sessions.value = result?.data ?? [];
+  } catch (error) {
+    console.error("Lỗi khi tải danh sách phiên cân:", error);
+  }
+  const stillExists = sessions.value.some((session) => session._id === selectedSessionId.value);
+  if (selectOpen || !stillExists) {
+    const openSession = sessions.value.find((session) => session.status === "open");
+    selectedSessionId.value = (openSession ?? sessions.value[0])?._id ?? null;
+  }
+};
+
 // Tải dữ liệu một lần rồi truyền xuống cả bảng và biểu đồ
 const loadData = async () => {
   isLoading.value = true;
   loadError.value = "";
   try {
-    let result = await FishTypeAPI.getDataFish();
+    let result = await FishTypeAPI.getDataFish(selectedSessionId.value ?? undefined);
     fishData.value = result?.data ?? [];
   } catch (error) {
     loadError.value = "Không thể tải dữ liệu, vui lòng thử lại sau.";
@@ -77,6 +112,7 @@ const basketTypes = ref([]);
 
 // Mở hộp thoại sửa/xóa một lần cân; danh sách loại giỏ tải lúc mở để luôn mới nhất
 const openEditDialog = async (item) => {
+  if (isSessionClosed.value) return;
   editingItem.value = item;
   try {
     let result = await BasketTypeAPI.getBasketTypes();
@@ -91,7 +127,24 @@ const handleEditDone = async () => {
   await loadData();
 };
 
+const selectSession = async (sessionId) => {
+  selectedSessionId.value = sessionId;
+  await loadData();
+};
+
+// Tạo/kết thúc phiên, hoặc lần cân đầu tiên tự tạo phiên: tải lại danh sách và chuyển sang phiên đang mở
+const handleSessionChanged = async () => {
+  await loadSessions({ selectOpen: true });
+  await loadData();
+};
+
+const handleWeightAdded = async () => {
+  if (!selectedSession.value) await loadSessions({ selectOpen: true });
+  await loadData();
+};
+
 onMounted(async () => {
+  await loadSessions({ selectOpen: true });
   await loadData();
 });
 </script>
@@ -148,6 +201,17 @@ onMounted(async () => {
 
     .add-data {
       flex: 1;
+
+      .session-closed {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        min-height: 120px;
+        text-align: center;
+        font-weight: 600;
+        color: $color-text-primary;
+      }
       background-color: $color-card-background;
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);

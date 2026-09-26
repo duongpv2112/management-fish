@@ -2,6 +2,12 @@ import { test, expect, vi, beforeEach } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
 
 vi.mock("chart.js/auto", () => ({ default: class { destroy() {} } }));
+vi.mock("@/services/weighSessionAPI", () => ({
+  default: {
+    getWeighSessions: vi.fn(async () => ({ data: [] })),
+    getSessionSummary: vi.fn(async () => ({ data: null })),
+  },
+}));
 vi.mock("@/services/fishTypeAPI", () => ({
   default: { getDataFish: vi.fn(), getFishTypes: vi.fn(async () => ({ data: [] })) },
 }));
