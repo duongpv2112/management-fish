@@ -60,3 +60,6 @@
 
 ## Cập nhật 2026-09-26 — Xóa form sau khi lưu
 - Lưu số cân thành công (nhập tay hoặc giọng nói) thì xóa hết loại cá, loại giỏ và số cân; lần sau phải chọn/nói lại cá và giỏ. Lệnh "hủy" vẫn chỉ xóa số cân. (Thay cho hành vi "giữ cá và giỏ" ghi ở trên.)
+
+## Cập nhật 2026-09-26 — Combobox mở khi bấm vào ô
+- `ComboboxComponent`: bấm vào ô nhập (không chỉ mũi tên) là mở danh sách đầy đủ để chọn; đang mở thì bấm tiếp vẫn giữ mở để gõ lọc; combobox bị khóa thì không mở.

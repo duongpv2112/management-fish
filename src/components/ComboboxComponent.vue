@@ -23,6 +23,7 @@
           :disabled="disabled"
           autocomplete="off"
           type="text"
+          @click="handleClickInput"
           @input="handleChangeInput"
           @keydown="handleKeyPress"
           @focus="handleFocusInput"
@@ -170,6 +171,14 @@ const handleClick = () => {
   if (!props.disabled) {
     isShowLstData.value = !isShowLstData.value;
   }
+};
+
+// Bấm vào ô nhập thì mở danh sách đầy đủ để chọn; đang mở thì giữ nguyên để gõ lọc
+const handleClickInput = () => {
+  if (props.disabled || isShowLstData.value) return;
+  indexFocusCurrent.value = null;
+  lstDataCombobox.value = remapLstData();
+  isShowLstData.value = true;
 };
 
 const handleFocusInput = () => {
