@@ -65,7 +65,7 @@
   </div>
 </template>
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 
 const props = defineProps({
   idControl: {
@@ -144,6 +144,20 @@ onMounted(() => {
   lstDataCombobox.value = remapLstData();
   initTextCombobox();
 });
+
+// Đồng bộ chữ hiển thị khi giá trị được đặt từ bên ngoài (reset form, nhập bằng giọng nói)
+// hoặc khi danh sách được tải xong sau khi mount
+watch(
+  () => [props.modelValue, props.lstData],
+  () => {
+    if (itemSelectedCurrent.value[props.dataField] != props.modelValue) {
+      itemSelectedCurrent.value = {};
+    }
+    lstDataCombobox.value = remapLstData();
+    initTextCombobox();
+  },
+  { deep: true }
+);
 
 const initTextCombobox = () => {
   let itemInit = props.lstData.find(

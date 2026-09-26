@@ -93,8 +93,10 @@ const handleKeyPress = ($event) => {
   }
   switch (props.typeInput) {
     case typeInputEnum.value.NumberType:
-      // Chỉ cho phép các phím số (0-9), phím Backspace, phím Delete, phím Tab và phím mũi tên
+      // Chỉ cho phép các phím số (0-9), dấu thập phân (. hoặc ,), phím Backspace, phím Delete, phím Tab và phím mũi tên
       const allowedKeys = [
+        ".",
+        ",",
         "Backspace",
         "Delete",
         "Tab",
