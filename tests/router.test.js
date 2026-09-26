@@ -32,7 +32,8 @@ test("điều hướng giữa trang Cân cá và Danh mục", async () => {
 
   await router.push("/");
   await flushPromises();
-  expect(wrapper.text()).toContain("Quản lý cân cá nhà Đặng Ánh");
+  expect(wrapper.text()).toContain("Lưu số cân");
+  expect(wrapper.find(".management-fish__heading").exists()).toBe(false);
 
   const links = wrapper.findAll("nav a");
   expect(links.map((a) => a.text())).toEqual(["Cân cá", "Danh mục", "Nhật ký"]);

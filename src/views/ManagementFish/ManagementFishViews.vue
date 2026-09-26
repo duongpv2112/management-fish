@@ -64,7 +64,6 @@
   <!-- Máy tính: nhập bên trái, xem bên phải -->
   <div v-else class="management-fish">
     <div class="management-fish__top">
-      <div class="management-fish__heading">Quản lý cân cá nhà Đặng Ánh</div>
       <SessionBar
         class="management-fish__session"
         :sessions="sessions"
@@ -357,13 +356,6 @@ $card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     align-items: center;
     gap: 16px;
     flex-wrap: wrap;
-  }
-
-  .management-fish__heading {
-    font-size: 20px;
-    text-transform: uppercase;
-    font-weight: 600;
-    color: $color-primary;
   }
 
   .management-fish__session {
