@@ -3,6 +3,7 @@
     <div class="management-fish__heading">Quản lý cân cá nhà Đặng Ánh</div>
     <div class="management-fish__container">
       <div class="viewer-data">
+        <div class="load-error" v-if="loadError">{{ loadError }}</div>
         <DataViewer
           ref="dataViewerRef"
           :isLoading="isLoading"
@@ -12,7 +13,7 @@
         <AddWeight @weightAdded="loadData"></AddWeight>
       </div>
       <div class="statistic-data">
-        <StatisticData></StatisticData>
+        <StatisticData :fishData="fishData"></StatisticData>
       </div>
     </div>
   </div>
@@ -30,18 +31,32 @@ import StatisticData from "./components/StatisticData.vue";
 const dataViewerRef = ref(null);
 const isLoading = ref(false);
 
+const fishData = ref([]);
+const loadError = ref("");
+
+// Tải dữ liệu một lần rồi truyền xuống cả bảng và biểu đồ
 const loadData = async () => {
   isLoading.value = true;
-  let result = await FishTypeAPI.getDataFish();
-  let maxRows = Math.max(
-    ...Object.values(result.data).map((arr) => arr.fishWeights.length)
-  );
+  loadError.value = "";
+  try {
+    let result = await FishTypeAPI.getDataFish();
+    fishData.value = result?.data ?? [];
+  } catch (error) {
+    loadError.value = "Không thể tải dữ liệu, vui lòng thử lại sau.";
+    console.error("Lỗi khi tải dữ liệu cá:", error);
+  } finally {
+    // Math.max(0, ...) để DB trống không cho -Infinity
+    let maxRows = Math.max(
+      0,
+      ...fishData.value.map((fishType) => fishType.fishWeights.length)
+    );
 
-  if (dataViewerRef.value) {
-    dataViewerRef.value.initDataTable(result.data, maxRows);
+    if (dataViewerRef.value) {
+      dataViewerRef.value.initDataTable(fishData.value, maxRows);
+    }
+
+    isLoading.value = false;
   }
-
-  isLoading.value = false;
 };
 
 onMounted(async () => {
@@ -78,6 +93,16 @@ onMounted(async () => {
 
     .viewer-data {
       width: 100%;
+
+      .load-error {
+        color: $color-error;
+        background-color: lighten($color-error, 40%);
+        border-radius: 4px;
+        padding: 8px;
+        margin-bottom: 16px;
+        text-align: center;
+        font-size: 14px;
+      }
       background-color: $color-card-background;
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);

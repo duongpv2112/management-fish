@@ -32,6 +32,9 @@
         </tr>
       </thead>
       <tbody>
+        <tr v-if="numberRowsOfTable === 0">
+          <td :colspan="Math.max(1, filteredData.length)" class="empty-row">Chưa có dữ liệu cân cá.</td>
+        </tr>
         <tr v-for="row in paginatedRows">
           <td v-for="(fishType, fishTypeIndex) in filteredData">
             {{ fishType.fishWeights[row - 1] }}
@@ -60,7 +63,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref, computed, defineExpose } from "vue";
+import { ref, computed, watch } from "vue";
 
 defineProps({
   isLoading: {
@@ -69,7 +72,7 @@ defineProps({
   },
 });
 
-const isShowTable = ref(true);
+const isShowTable = ref(false);
 const dataOfTable = ref([]);
 const numberRowsOfTable = ref(0);
 const searchTerm = ref("");
@@ -77,18 +80,22 @@ const itemsPerPage = ref(5);
 const currentPage = ref(1);
 
 const initDataTable = (data, numberRows) => {
-  if (data.length > 0) {
-    isShowTable.value = true;
-    dataOfTable.value = data;
-    numberRowsOfTable.value = numberRows;
-    // Đảo ngược thứ tự các hàng để hiển thị bản ghi mới nhất lên đầu tiên
-    dataOfTable.value.forEach(fishType => {
-      fishType.fishWeights = fishType.fishWeights.slice().reverse();
-    });
-  } else {
-    isShowTable.value = false;
+  isShowTable.value = true;
+  // Đảo ngược thứ tự các hàng để hiển thị bản ghi mới nhất lên đầu tiên (không sửa mảng đầu vào)
+  dataOfTable.value = (data ?? []).map((fishType) => ({
+    ...fishType,
+    fishWeights: fishType.fishWeights.slice().reverse(),
+  }));
+  numberRowsOfTable.value = numberRows;
+  if (currentPage.value > totalPages.value) {
+    currentPage.value = 1;
   }
 };
+
+// Tìm kiếm hoặc đổi số dòng mỗi trang thì quay về trang đầu
+watch([searchTerm, itemsPerPage], () => {
+  currentPage.value = 1;
+});
 
 // Định nghĩa sự kiện để component cha có thể gọi cập nhật
 defineExpose({ initDataTable });
@@ -105,7 +112,7 @@ const filteredData = computed(() => {
 });
 
 const totalPages = computed(() => {
-  return Math.ceil(numberRowsOfTable.value / itemsPerPage.value);
+  return Math.max(1, Math.ceil(numberRowsOfTable.value / itemsPerPage.value));
 });
 
 const paginatedRows = computed(() => {

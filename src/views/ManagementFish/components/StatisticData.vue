@@ -1,95 +1,72 @@
 <template>
   <div class="statistic-data-container">
     <h1>Thống kê dữ liệu</h1>
-    <div v-if="isLoading" class="loading">Đang tải dữ liệu...</div>
-    <div v-else-if="errorMessage" class="error-message">{{ errorMessage }}</div>
-    <div v-else class="chart-container">
-      <canvas id="fishWeightChart" width="400" height="200"></canvas>
+    <div v-if="!hasData" class="loading">Chưa có dữ liệu cân cá.</div>
+    <div v-show="hasData" class="chart-container">
+      <canvas ref="chartCanvas" width="400" height="200"></canvas>
     </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import Chart from 'chart.js/auto';
-import FishTypeAPI from "@/services/fishTypeAPI";
 
-const dataTable = ref([]);
-const errorMessage = ref("");
-const isLoading = ref(false);
+const props = defineProps({
+  // Dữ liệu do ManagementFishViews tải một lần và truyền xuống: [{ fishName, fishWeights: number[] }]
+  fishData: {
+    type: Array,
+    default: () => [],
+  },
+});
 
-const loadData = async () => {
-  isLoading.value = true;
-  errorMessage.value = "";
-  try {
-    // Kiểm tra xem dữ liệu có được lưu trong localStorage không
-    const cachedData = localStorage.getItem('fishData');
-    if (cachedData) {
-      const parsedData = JSON.parse(cachedData);
-      // Kiểm tra xem dữ liệu trong cache có cũ hơn 5 phút không
-      if (Date.now() - parsedData.timestamp < 5 * 60 * 1000) {
-        dataTable.value = parsedData.data;
-        renderChart();
-        isLoading.value = false;
-        return;
-      }
-    }
-    
-    // Nếu không có cache hợp lệ, lấy dữ liệu từ API
-    let result = await FishTypeAPI.getDataFish();
-    dataTable.value = result.data;
-    // Lưu dữ liệu vào cache kèm theo thời gian
-    localStorage.setItem('fishData', JSON.stringify({
-      data: result.data,
-      timestamp: Date.now()
-    }));
-    renderChart();
-  } catch (error) {
-    errorMessage.value = "Không thể kết nối đến máy chủ, vui lòng thử lại sau.";
-    console.error("Lỗi khi tải dữ liệu:", error);
-  } finally {
-    isLoading.value = false;
-  }
+const chartCanvas = ref(null);
+let chart = null;
+
+const hasData = computed(() => props.fishData.length > 0);
+
+const destroyChart = () => {
+  chart?.destroy();
+  chart = null;
 };
 
-const renderChart = () => {
-  if (dataTable.value.length === 0) return;
-  setTimeout(() => {
-    const canvas = document.getElementById('fishWeightChart');
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: dataTable.value.map(item => item.fishName),
-          datasets: [{
-            label: 'Tổng cân nặng (kg)',
-            data: dataTable.value.map(item => {
-              return item.fishWeights.reduce((sum, weight) => sum + weight, 0);
-            }),
-            backgroundColor: 'rgba(46, 125, 50, 0.6)',
-            borderColor: 'rgba(46, 125, 50, 1)',
-            borderWidth: 1
-          }]
-        },
-        options: {
-          scales: {
-            y: {
-              beginAtZero: true
-            }
-          },
-          responsive: true,
-          maintainAspectRatio: false
+const renderChart = async () => {
+  destroyChart();
+  if (!hasData.value) return;
+  // Đợi DOM cập nhật để canvas hiển thị
+  await nextTick();
+  if (!chartCanvas.value) return;
+
+  chart = new Chart(chartCanvas.value, {
+    type: 'bar',
+    data: {
+      labels: props.fishData.map(item => item.fishName),
+      datasets: [{
+        label: 'Tổng cân nặng (kg)',
+        data: props.fishData.map(item => {
+          return item.fishWeights.reduce((sum, weight) => sum + weight, 0);
+        }),
+        backgroundColor: 'rgba(46, 125, 50, 0.6)',
+        borderColor: 'rgba(46, 125, 50, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true
         }
-      });
-    } else {
-      console.error("Không tìm thấy phần tử canvas");
+      },
+      responsive: true,
+      maintainAspectRatio: false
     }
-  }, 100); // Trì hoãn để đảm bảo DOM được render hoàn toàn
+  });
 };
 
-onMounted(async () => {
-  await loadData();
+watch(() => props.fishData, renderChart, { immediate: true });
+
+onBeforeUnmount(() => {
+  destroyChart();
 });
 </script>
 
