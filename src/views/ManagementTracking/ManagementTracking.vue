@@ -9,7 +9,7 @@
           idControl="logFishType"
           labelControl="Loại cá"
           :modelValue="fishTypeFilter"
-          height="36px"
+          height="40px"
           :lstData="fishTypeOptions"
           dataField="value"
           dataFieldText="text"
@@ -19,7 +19,25 @@
 
       <div class="error-message" v-if="errorMessage">{{ errorMessage }}</div>
 
-      <table class="log-table">
+      <!-- Điện thoại: mỗi dòng nhật ký một mục, không phải vuốt ngang bảng 3 cột -->
+      <ul v-if="isMobile" class="log-list">
+        <li v-if="logs.length === 0" class="log-list__empty">
+          {{ isLoading ? "Đang tải dữ liệu..." : "Chưa có nhật ký." }}
+        </li>
+        <li
+          v-for="log in logs"
+          :key="log._id"
+          class="log-item"
+          :class="{ 'log-item--error': log.stepName?.includes('không thành công') }"
+        >
+          <div class="log-item__meta">
+            {{ formatDateTime(log.createdAt) }}<template v-if="log.fishTypeName"> · {{ log.fishTypeName }}</template>
+          </div>
+          <div class="log-item__text">{{ log.stepName }}</div>
+        </li>
+      </ul>
+
+      <table v-else class="log-table">
         <thead>
           <tr>
             <th class="log-table__time">Thời gian</th>
@@ -66,8 +84,11 @@ import CPCombobox from "@/components/ComboboxComponent.vue";
 import LogTrackingAPI from "@/services/logTrackingAPI";
 import FishTypeAPI from "@/services/fishTypeAPI";
 import { common } from "@/common/common";
+import { useIsMobile } from "@/composables/useIsMobile";
 
 const PAGE_SIZE = 20;
+
+const isMobile = useIsMobile();
 
 const logs = ref([]);
 const total = ref(0);
@@ -154,7 +175,7 @@ onMounted(async () => {
 
   .management-tracking__card {
     background-color: $color-card-background;
-    border-radius: 8px;
+    border-radius: $radius-lg;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     padding: 16px;
   }
@@ -168,7 +189,7 @@ onMounted(async () => {
     margin-bottom: 16px;
     font-size: 14px;
     padding: 8px;
-    border-radius: 4px;
+    border-radius: $radius-md;
     text-align: center;
     color: $color-error;
     background-color: lighten($color-error, 40%);
@@ -209,6 +230,38 @@ onMounted(async () => {
     }
   }
 
+  .log-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    .log-list__empty {
+      padding: 16px 0;
+      text-align: center;
+      font-size: 15px;
+    }
+
+    .log-item {
+      padding: 10px 0;
+      border-bottom: 1px solid $color-border;
+      color: $color-text-primary;
+
+      .log-item__meta {
+        font-size: 13px;
+        opacity: 0.7;
+        margin-bottom: 2px;
+      }
+
+      .log-item__text {
+        font-size: 15px;
+      }
+
+      &.log-item--error {
+        color: $color-error;
+      }
+    }
+  }
+
   .pagination {
     display: flex;
     justify-content: center;
@@ -217,10 +270,13 @@ onMounted(async () => {
     margin-top: 16px;
 
     .page-btn {
+      min-height: 40px;
       padding: 8px 16px;
-      border: 1px solid $color-border;
-      border-radius: 4px;
+      border: 1px solid $color-border-strong;
+      border-radius: $radius-md;
       background-color: $color-card-background;
+      color: $color-primary;
+      font-weight: 600;
       cursor: pointer;
 
       &:hover:not(:disabled) {
@@ -236,6 +292,27 @@ onMounted(async () => {
     span {
       font-size: 14px;
       color: $color-text-primary;
+    }
+  }
+}
+
+@media (max-width: 899.98px) {
+  .management-tracking {
+    padding: 0 12px 20px;
+
+    .management-tracking__title {
+      font-size: 20px;
+      padding: 12px 0;
+    }
+
+    .management-tracking__card {
+      padding: 12px;
+    }
+
+    .pagination .page-btn {
+      min-height: 44px;
+      min-width: 72px;
+      font-size: 16px;
     }
   }
 }

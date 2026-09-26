@@ -14,13 +14,16 @@ vi.mock("@/services/fishTypeAPI", () => ({
 vi.mock("@/services/basketTypeAPI", () => ({
   default: { getBasketTypes: vi.fn(async () => ({ data: [] })) },
 }));
-vi.mock("@/services/fishWeightAPI", () => ({ default: { saveFishWeight: vi.fn() } }));
+vi.mock("@/services/fishWeightAPI", () => ({ default: { saveFishWeight: vi.fn(), deleteFishWeight: vi.fn() } }));
 
 import FishTypeAPI from "@/services/fishTypeAPI";
 import ManagementFishViews from "@/views/ManagementFish/ManagementFishViews.vue";
 import AddWeight from "@/views/ManagementFish/components/AddWeight.vue";
 import StatisticData from "@/views/ManagementFish/components/StatisticData.vue";
 import WeightEditDialog from "@/views/ManagementFish/components/WeightEditDialog.vue";
+import RecentWeights from "@/views/ManagementFish/components/RecentWeights.vue";
+import DataViewer from "@/views/ManagementFish/components/DataViewer.vue";
+import WeighSessionAPI from "@/services/weighSessionAPI";
 
 beforeEach(() => {
   localStorage.clear();
@@ -81,4 +84,50 @@ test("chọn ô → mở hộp thoại sửa; lưu xong đóng hộp thoại và
   await flushPromises();
   expect(wrapper.findComponent(WeightEditDialog).exists()).toBe(false);
   expect(FishTypeAPI.getDataFish).toHaveBeenCalledTimes(2);
+});
+
+const dataWithItem = () => [
+  {
+    _id: "f1",
+    fishName: "Cá trắm",
+    fishWeights: [25.5],
+    fishWeightItems: [{ _id: "w1", fishWeight: 25.5, basketType: null, createdAt: "2026-09-26T01:00:00Z" }],
+  },
+];
+
+test("Lần cân gần đây: nhận dữ liệu phiên; bấm Sửa mở hộp thoại, xóa xong tải lại", async () => {
+  vi.mocked(FishTypeAPI.getDataFish).mockResolvedValue({ success: true, data: dataWithItem() });
+  const wrapper = mount(ManagementFishViews);
+  await flushPromises();
+
+  const recent = wrapper.findComponent(RecentWeights);
+  expect(recent.props("fishData")).toEqual(dataWithItem());
+
+  recent.vm.$emit("edit", { _id: "w1", fishType: "f1", fishWeight: 25.5 });
+  await flushPromises();
+  expect(wrapper.findComponent(WeightEditDialog).props("item")).toMatchObject({ _id: "w1" });
+
+  recent.vm.$emit("deleted");
+  await flushPromises();
+  expect(FishTypeAPI.getDataFish).toHaveBeenCalledTimes(2);
+});
+
+test("hoàn tác lần cân → tải lại dữ liệu", async () => {
+  vi.mocked(FishTypeAPI.getDataFish).mockResolvedValue({ success: true, data: dataWithItem() });
+  const wrapper = mount(ManagementFishViews);
+  await flushPromises();
+  wrapper.findComponent(AddWeight).vm.$emit("weightUndone");
+  await flushPromises();
+  expect(FishTypeAPI.getDataFish).toHaveBeenCalledTimes(2);
+});
+
+test("phiên đã kết thúc: bảng chỉ xem, không có Lần cân gần đây", async () => {
+  vi.mocked(WeighSessionAPI.getWeighSessions).mockResolvedValueOnce({
+    data: [{ _id: "s1", sessionName: "Cũ", status: "closed" }],
+  });
+  vi.mocked(FishTypeAPI.getDataFish).mockResolvedValue({ success: true, data: dataWithItem() });
+  const wrapper = mount(ManagementFishViews);
+  await flushPromises();
+  expect(wrapper.findComponent(DataViewer).props("readOnly")).toBe(true);
+  expect(wrapper.findComponent(RecentWeights).exists()).toBe(false);
 });

@@ -5,7 +5,7 @@
       idControl="sessionSelect"
       labelControl="Phiên cân"
       :modelValue="selectedId"
-      height="36px"
+      height="40px"
       placeholderText="Chưa có phiên cân"
       :lstData="sessionOptions"
       dataField="_id"
@@ -16,15 +16,16 @@
       <CPButton
         class="btn-new-session"
         textButton="Phiên mới"
-        height="36px"
+        height="40px"
         :disabled="isSaving"
         @click="createSession"
       />
       <CPButton
         v-if="selectedSession?.status === 'open'"
         class="btn-close-session"
+        typeButton="danger"
         textButton="Kết thúc phiên"
-        height="36px"
+        height="40px"
         :disabled="isSaving"
         @click="closeSession"
       />
@@ -113,7 +114,7 @@ const closeSession = async () => {
   gap: 12px;
   width: 100%;
   background-color: $color-card-background;
-  border-radius: 8px;
+  border-radius: $radius-lg;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   padding: 16px;
 
