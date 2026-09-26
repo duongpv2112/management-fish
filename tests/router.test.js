@@ -19,9 +19,11 @@ vi.mock("@/services/basketTypeAPI", () => ({
 }));
 
 import router from "@/router";
+import { setSession } from "@/common/auth";
 import App from "@/App.vue";
 
 test("điều hướng giữa trang Cân cá và Danh mục", async () => {
+  setSession({ token: "t", expiresAt: new Date(Date.now() + 3600000).toISOString() });
   router.push("/danh-muc");
   await router.isReady();
   const wrapper = mount(App, { global: { plugins: [router] } });
@@ -34,6 +36,18 @@ test("điều hướng giữa trang Cân cá và Danh mục", async () => {
 
   const links = wrapper.findAll("nav a");
   expect(links.map((a) => a.text())).toEqual(["Cân cá", "Danh mục"]);
+});
+
+test("nút Đăng xuất xóa token và về trang đăng nhập; trang đăng nhập không hiện thanh điều hướng", async () => {
+  setSession({ token: "t", expiresAt: new Date(Date.now() + 3600000).toISOString() });
+  await router.push("/");
+  const wrapper = mount(App, { global: { plugins: [router] } });
+  await flushPromises();
+  await wrapper.find(".app-nav__logout").trigger("click");
+  await flushPromises();
+  expect(localStorage.getItem("token")).toBeNull();
+  expect(router.currentRoute.value.name).toBe("login");
+  expect(wrapper.find("nav").exists()).toBe(false);
 });
 
 test("router dùng hash history", () => {
