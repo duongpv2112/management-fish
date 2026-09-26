@@ -42,3 +42,9 @@
 - Trang Danh mục: thêm/sửa tại chỗ/xóa loại cá và loại giỏ (trọng lượng giỏ nhập được `1,5`).
 - Bấm vào một ô trên bảng cân để sửa hoặc xóa lần cân đó; bảng và biểu đồ tải lại sau khi lưu.
 - Bỏ cache localStorage danh sách loại cá/loại giỏ trong form thêm cân.
+
+## Cập nhật 2026-09-26 — Nhập liệu bằng giọng nói (kế hoạch 04)
+- Nút micro trong "Thêm cân nặng": nói "trắm giỏ to 25,5 lưu", "34 lưu", "hủy"...; cá và giỏ được giữ giữa các lần cân; đọc xác nhận sau khi lưu (có công tắc).
+- Mã trong `src/voice/`; hướng dẫn sử dụng trong README.
+- Sau khi lưu (cả nhập tay) chỉ xóa số cân, giữ loại cá và giỏ.
+- Chưa làm: kiểm thử trên điện thoại thật (Android Chrome, iPhone Safari) theo checklist của kế hoạch 04 Task 6.
