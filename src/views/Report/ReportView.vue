@@ -26,11 +26,12 @@
     </div>
     <div class="report__range-error no-print" v-if="rangeError">{{ rangeError }}</div>
 
-    <label class="overview__toggle no-print">
+    <label v-if="rangeHasToday" class="overview__toggle no-print">
       <input id="includeOpen" type="checkbox" v-model="includeOpen" @change="loadOverview" />
       Tính cả vụ đang nuôi (tạm tính)
     </label>
 
+    <div v-if="isLoading && data" class="overview__reloading no-print" role="status">Đang tải...</div>
     <div class="overview__error" v-if="errorMessage">{{ errorMessage }}</div>
     <div v-else-if="!data" class="overview__loading">Đang tải báo cáo...</div>
 
@@ -64,7 +65,7 @@
         </button>
       </section>
 
-      <section v-if="data.openCrops.length > 0" class="overview-section report-open">
+      <section v-if="periodHasToday(data.period) && data.openCrops.length > 0" class="overview-section report-open">
         <h2>Đang nuôi (tạm tính)</h2>
         <button
           v-for="row in data.openCrops"
@@ -134,7 +135,7 @@ import CPSelect from "@/components/SelectComponent.vue";
 import ProfitChart from "./components/ProfitChart.vue";
 import ReportAPI from "@/services/reportAPI";
 import { formatMoney } from "@/common/currency";
-import { formatDateOnly } from "@/common/dateInput";
+import { formatDateOnly, todayInputValue } from "@/common/dateInput";
 
 // Báo cáo tổng (/bao-cao): lãi các vụ trong kỳ − chi phí chung = lãi ròng cả nhà
 const router = useRouter();
@@ -162,6 +163,16 @@ const includeOpen = ref(false);
 const range = ref(yearRange(currentYear));
 
 const data = ref(null);
+const isLoading = ref(false);
+// Chỉ nhận phản hồi của lần tải mới nhất (đổi kỳ nhanh thì phản hồi cũ có thể về sau)
+let latestRequest = 0;
+
+// Vụ đang nuôi chỉ có nghĩa khi kỳ có ngày hôm nay (không cộng lãi tạm tính hiện tại vào năm cũ)
+const periodHasToday = ({ from, to }) => {
+  const today = todayInputValue();
+  return from <= today && today <= to;
+};
+const rangeHasToday = computed(() => periodHasToday(range.value));
 const errorMessage = ref("");
 
 // Tên vụ mặc định đã có tên ao ("Ao 1 · Vụ 09/2026") thì bỏ phần tên ao để không lặp
@@ -178,14 +189,23 @@ const chartRows = computed(() => {
 });
 
 const loadOverview = async () => {
+  const request = ++latestRequest;
   errorMessage.value = "";
+  isLoading.value = true;
   try {
-    const result = await ReportAPI.getOverview({ ...range.value, includeOpen: includeOpen.value ? 1 : 0 });
+    const result = await ReportAPI.getOverview({
+      ...range.value,
+      includeOpen: includeOpen.value && rangeHasToday.value ? 1 : 0,
+    });
+    if (request !== latestRequest) return;
     data.value = result?.data ?? null;
   } catch (error) {
+    if (request !== latestRequest) return;
     data.value = null;
     errorMessage.value = "Không thể tải báo cáo tổng, vui lòng thử lại sau.";
     console.error("Lỗi khi tải báo cáo tổng:", error);
+  } finally {
+    if (request === latestRequest) isLoading.value = false;
   }
 };
 
@@ -208,7 +228,7 @@ const applyRange = () => {
   }
   // "YYYY-MM-DD" so sánh chuỗi được
   if (customFrom.value > customTo.value) {
-    rangeError.value = "Ngày kết thúc phải sau ngày bắt đầu!";
+    rangeError.value = "Ngày kết thúc không được trước ngày bắt đầu!";
     return;
   }
   rangeError.value = "";
@@ -314,6 +334,12 @@ onMounted(loadOverview);
 
 .overview__loading {
   padding: 12px 0;
+}
+
+.overview__reloading {
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: $color-primary;
 }
 
 .overview__period {

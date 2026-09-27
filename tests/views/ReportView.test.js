@@ -195,7 +195,7 @@ test("Tùy chọn: kiểm tra khoảng ngày trước khi gọi API", async () =
 
   await wrapper.find("#reportTo").setValue("2026-05-01");
   await wrapper.find(".btn-apply-range button").trigger("click");
-  expect(wrapper.find(".report__range-error").text()).toBe("Ngày kết thúc phải sau ngày bắt đầu!");
+  expect(wrapper.find(".report__range-error").text()).toBe("Ngày kết thúc không được trước ngày bắt đầu!");
   expect(ReportAPI.getOverview).toHaveBeenCalledTimes(1);
 
   await wrapper.find("#reportTo").setValue("2026-09-30");
@@ -264,4 +264,86 @@ test("tên vụ mặc định đã có tên ao → không lặp tên ao", async 
   expect(text).toContain("Ao 1 · Vụ 09/2026");
   expect(text).not.toContain("Ao 1 · Ao 1");
   expect(wrapper.findComponent(ProfitChart).props("rows")[0].label).toBe("Ao 1 · Vụ 09/2026");
+});
+
+// Promise tự điều khiển để giả lập phản hồi về chậm
+const deferred = () => {
+  let resolve;
+  const promise = new Promise((done) => (resolve = done));
+  return { promise, resolve };
+};
+
+test("phản hồi cũ về sau không đè kết quả mới", async () => {
+  const { wrapper } = await mountView();
+  const slow = deferred();
+  const fast = deferred();
+  vi.mocked(ReportAPI.getOverview).mockReturnValueOnce(slow.promise).mockReturnValueOnce(fast.promise);
+
+  await chooseOption(wrapper, "#reportPeriod", String(year - 1));
+  await chooseOption(wrapper, "#reportPeriod", String(year - 2));
+  fast.resolve({ data: overview({ period: { from: `${year - 2}-01-01`, to: `${year - 2}-12-31` } }) });
+  await flushPromises();
+  slow.resolve({ data: overview({ period: { from: `${year - 1}-01-01`, to: `${year - 1}-12-31` } }) });
+  await flushPromises();
+
+  expect(wrapper.find(".overview__period").text()).toContain(`01/01/${year - 2}`);
+});
+
+test("lỗi của yêu cầu cũ không che kết quả mới", async () => {
+  const { wrapper } = await mountView();
+  const slow = deferred();
+  vi.mocked(ReportAPI.getOverview)
+    .mockReturnValueOnce(slow.promise)
+    .mockResolvedValueOnce({ data: overview({ period: { from: `${year - 2}-01-01`, to: `${year - 2}-12-31` } }) });
+
+  await chooseOption(wrapper, "#reportPeriod", String(year - 1));
+  await chooseOption(wrapper, "#reportPeriod", String(year - 2));
+  await flushPromises();
+  slow.resolve(Promise.reject(new Error("mạng")));
+  await flushPromises();
+
+  expect(wrapper.find(".overview__error").exists()).toBe(false);
+  expect(wrapper.find(".overview__period").text()).toContain(`01/01/${year - 2}`);
+});
+
+test("đang tải lại → hiện Đang tải…, xong thì ẩn", async () => {
+  const { wrapper } = await mountView();
+  expect(wrapper.find(".overview__reloading").exists()).toBe(false);
+  const pending = deferred();
+  vi.mocked(ReportAPI.getOverview).mockReturnValueOnce(pending.promise);
+
+  await chooseOption(wrapper, "#reportPeriod", String(year - 1));
+  expect(wrapper.find(".overview__reloading").text()).toBe("Đang tải...");
+  pending.resolve({ data: overview() });
+  await flushPromises();
+  expect(wrapper.find(".overview__reloading").exists()).toBe(false);
+});
+
+test("kỳ không có hôm nay → ẩn vụ đang nuôi và công tắc, không tính vụ đang nuôi", async () => {
+  const { wrapper } = await mountView();
+  await wrapper.find("#includeOpen").setValue(true);
+  await flushPromises();
+
+  vi.mocked(ReportAPI.getOverview).mockResolvedValueOnce({
+    data: overview({ period: { from: `${year - 1}-01-01`, to: `${year - 1}-12-31` } }),
+  });
+  await chooseOption(wrapper, "#reportPeriod", String(year - 1));
+  await flushPromises();
+  expect(ReportAPI.getOverview).toHaveBeenLastCalledWith({
+    from: `${year - 1}-01-01`,
+    to: `${year - 1}-12-31`,
+    includeOpen: 0,
+  });
+  expect(wrapper.find("#includeOpen").exists()).toBe(false);
+  expect(wrapper.find(".report-open").exists()).toBe(false);
+
+  // Quay lại năm nay → công tắc vẫn giữ trạng thái bật
+  await chooseOption(wrapper, "#reportPeriod", String(year));
+  await flushPromises();
+  expect(ReportAPI.getOverview).toHaveBeenLastCalledWith({
+    from: `${year}-01-01`,
+    to: `${year}-12-31`,
+    includeOpen: 1,
+  });
+  expect(wrapper.find(".report-open").exists()).toBe(true);
 });
