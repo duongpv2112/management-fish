@@ -12,6 +12,7 @@ const mountAt = async (path) => {
     history: createMemoryHistory(),
     routes: [
       { path: "/", name: "weigh", component: Empty },
+      { path: "/vu-nuoi", name: "crops", component: Empty },
       { path: "/danh-muc", name: "catalog", component: Empty },
       { path: "/nhat-ky", name: "log", component: Empty },
       { path: "/dang-nhap", name: "login", component: Empty },
@@ -33,6 +34,7 @@ test("tiêu đề theo trang", async () => {
   expect((await mountAt("/")).wrapper.find(".app-top-bar__title").text()).toBe("Cân cá");
   expect((await mountAt("/danh-muc")).wrapper.find(".app-top-bar__title").text()).toBe("Danh mục");
   expect((await mountAt("/nhat-ky")).wrapper.find(".app-top-bar__title").text()).toBe("Nhật ký");
+  expect((await mountAt("/vu-nuoi")).wrapper.find(".app-top-bar__title").text()).toBe("Vụ nuôi");
 });
 
 test("nút hành động bên phải theo store; bấm gọi onClick; xóa thì biến mất", async () => {

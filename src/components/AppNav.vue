@@ -28,6 +28,7 @@ const logout = () => {
 
 const links = [
   { name: "weigh", text: "Cân cá" },
+  { name: "crops", text: "Vụ nuôi" },
   { name: "catalog", text: "Danh mục" },
   { name: "log", text: "Nhật ký" },
 ];
