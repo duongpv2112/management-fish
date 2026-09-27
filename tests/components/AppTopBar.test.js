@@ -1,4 +1,4 @@
-import { test, expect, vi, beforeEach } from "vitest";
+import { test, expect, vi, beforeEach, afterEach, describe } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
 import { createRouter, createMemoryHistory } from "vue-router";
 
@@ -126,4 +126,40 @@ test("trang không có trong menu dùng route.meta.title", async () => {
   const wrapper = mount(AppTopBar, { global: { plugins: [router] } });
   await flushPromises();
   expect(wrapper.find(".app-top-bar__title").text()).toBe("Báo cáo vụ");
+});
+
+describe("mục Đọc xác nhận trong menu", () => {
+  afterEach(() => {
+    delete window.webkitSpeechRecognition;
+  });
+
+  test("trình duyệt không hỗ trợ giọng nói → không có mục", async () => {
+    const { wrapper } = await mountAt("/");
+    await wrapper.find(".app-top-bar__menu").trigger("click");
+    expect(wrapper.find(".app-top-bar__readback").exists()).toBe(false);
+  });
+
+  test("mặc định Bật; bấm → Tắt, nhớ vào localStorage, menu vẫn mở", async () => {
+    window.webkitSpeechRecognition = function FakeRecognition() {};
+    const { wrapper } = await mountAt("/");
+    await wrapper.find(".app-top-bar__menu").trigger("click");
+    const item = wrapper.find(".app-top-bar__readback");
+    expect(item.text()).toContain("Đọc xác nhận giọng nói");
+    expect(item.text()).toContain("Bật");
+    expect(item.attributes("aria-checked")).toBe("true");
+
+    await item.trigger("click");
+    expect(wrapper.find(".app-top-bar__readback").text()).toContain("Tắt");
+    expect(wrapper.find(".app-top-bar__readback").attributes("aria-checked")).toBe("false");
+    expect(localStorage.getItem("voiceReadback")).toBe("false");
+    expect(wrapper.find(".bottom-sheet").exists()).toBe(true);
+  });
+
+  test("đã tắt từ trước → hiện Tắt", async () => {
+    window.webkitSpeechRecognition = function FakeRecognition() {};
+    localStorage.setItem("voiceReadback", "false");
+    const { wrapper } = await mountAt("/");
+    await wrapper.find(".app-top-bar__menu").trigger("click");
+    expect(wrapper.find(".app-top-bar__readback").text()).toContain("Tắt");
+  });
 });

@@ -463,8 +463,8 @@ $card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 .management-fish--mobile {
   gap: 12px;
   padding: 12px;
-  // Chừa chỗ cho nút Lưu ghim đáy (52px) + thanh tab (56px) + khoảng cách
-  padding-bottom: calc(56px + 52px + 32px + env(safe-area-inset-bottom));
+  // Chừa chỗ cho thanh tab (56px) + nút Lưu ghim đáy (52px) + micro nổi phía trên (52px) + khoảng cách
+  padding-bottom: calc(56px + 52px + 52px + 44px + env(safe-area-inset-bottom));
 
   .mobile-panel {
     display: flex;

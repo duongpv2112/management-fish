@@ -22,6 +22,19 @@
       >
         {{ link.text }}
       </RouterLink>
+      <button
+        v-if="isVoiceSupported"
+        type="button"
+        role="switch"
+        class="app-top-bar__readback"
+        :aria-checked="String(isVoiceReadbackOn)"
+        @click="setVoiceReadback(!isVoiceReadbackOn)"
+      >
+        <span>Đọc xác nhận giọng nói</span>
+        <span class="app-top-bar__readback-state" :class="{ 'app-top-bar__readback-state--on': isVoiceReadbackOn }">
+          {{ isVoiceReadbackOn ? "Bật" : "Tắt" }}
+        </span>
+      </button>
       <button type="button" class="app-top-bar__logout" @click="logout">Đăng xuất</button>
     </BottomSheet>
   </header>
@@ -34,10 +47,15 @@ import { RouterLink, useRoute, useRouter } from "vue-router";
 import BottomSheet from "@/components/BottomSheet.vue";
 import { clearSession } from "@/common/auth";
 import { topBarAction } from "@/common/topBarAction";
+import { isVoiceReadbackOn, loadVoiceReadback, setVoiceReadback } from "@/common/voiceReadback";
 
 // Thanh trên cùng cho điện thoại: tên trang, nút hành động của trang, menu ☰
 const route = useRoute();
 const router = useRouter();
+
+// Mục "Đọc xác nhận giọng nói" chỉ có nghĩa khi trình duyệt nhận được giọng nói
+const isVoiceSupported = Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
+loadVoiceReadback();
 
 const isMenuOpen = ref(false);
 
@@ -107,6 +125,7 @@ const logout = () => {
   }
 
   .app-top-bar__link,
+  .app-top-bar__readback,
   .app-top-bar__logout {
     display: flex;
     align-items: center;
@@ -125,6 +144,27 @@ const logout = () => {
 
   .app-top-bar__link--active {
     color: $color-primary;
+  }
+
+  .app-top-bar__readback {
+    justify-content: space-between;
+    gap: 12px;
+    font-weight: 400;
+  }
+
+  .app-top-bar__readback-state {
+    min-width: 48px;
+    padding: 4px 10px;
+    border-radius: $radius-sm;
+    background-color: $color-border;
+    color: $color-text-primary;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .app-top-bar__readback-state--on {
+    background-color: $color-primary;
+    color: $color-card-background;
   }
 
   .app-top-bar__logout {

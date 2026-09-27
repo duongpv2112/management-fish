@@ -45,6 +45,7 @@ vi.mock("@/services/basketTypeAPI", () => ({
 
 import FishWeightAPI from "@/services/fishWeightAPI";
 import AddWeight from "@/views/ManagementFish/components/AddWeight.vue";
+import { setVoiceReadback } from "@/common/voiceReadback";
 
 const say = async (text) => {
   speech.onFinal(text);
@@ -188,6 +189,14 @@ describe("đọc xác nhận", () => {
     expect(wrapper.find(".voice-input__readback input").element.checked).toBe(false);
   });
 
+
+  test("tắt trong menu ☰ (trạng thái chung) → không đọc", async () => {
+    await mountForm();
+    setVoiceReadback(false);
+    await say("trắm giỏ to 25 lưu");
+    expect(FishWeightAPI.saveFishWeight).toHaveBeenCalledTimes(1);
+    expect(speakMock).not.toHaveBeenCalled();
+  });
   test("bấm nút Lưu bằng tay → không đọc", async () => {
     const wrapper = await mountForm();
     await say("trắm giỏ to 25");

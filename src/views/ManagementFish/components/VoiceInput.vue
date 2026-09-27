@@ -16,7 +16,7 @@
         Trình duyệt này chưa hỗ trợ nhập bằng giọng nói, hãy dùng Chrome.
       </div>
       <label v-if="isSupported" class="voice-input__readback">
-        <input type="checkbox" :checked="isReadbackOn" @change="setReadback($event.target.checked)" />
+        <input type="checkbox" :checked="isVoiceReadbackOn" @change="setVoiceReadback($event.target.checked)" />
         Đọc xác nhận
       </label>
       <div v-if="errorMessage" class="voice-input__error">{{ errorMessage }}</div>
@@ -38,6 +38,7 @@ import "@mdi/font/css/materialdesignicons.css";
 import { useSpeechRecognition } from "@/voice/useSpeechRecognition";
 import { parseWeightUtterance } from "@/voice/parseWeightUtterance";
 import { speak } from "@/voice/speak";
+import { isVoiceReadbackOn, loadVoiceReadback, setVoiceReadback } from "@/common/voiceReadback";
 
 const props = defineProps({
   fishTypes: {
@@ -73,29 +74,12 @@ const toggleListening = () => {
   else start();
 };
 
-// Công tắc "Đọc xác nhận": mặc định bật, nhớ trong localStorage
-const READBACK_KEY = "voiceReadback";
-const readStoredReadback = () => {
-  try {
-    return localStorage.getItem(READBACK_KEY) !== "false";
-  } catch {
-    return true;
-  }
-};
-const isReadbackOn = ref(readStoredReadback());
-
-const setReadback = (value) => {
-  isReadbackOn.value = value;
-  try {
-    localStorage.setItem(READBACK_KEY, String(value));
-  } catch {
-    // Trình duyệt chặn localStorage: chỉ nhớ trong phiên hiện tại
-  }
-};
+// Công tắc "Đọc xác nhận" dùng chung với menu ☰ trên điện thoại
+loadVoiceReadback();
 
 // Đọc câu xác nhận; tạm dừng nghe trong lúc đọc để không tự nghe chính mình
 const announce = (text) => {
-  if (!isReadbackOn.value) return;
+  if (!isVoiceReadbackOn.value) return;
   pause();
   speak(text, { onEnd: resume });
 };
@@ -175,6 +159,25 @@ defineExpose({ isListening, start, stop, announce });
     .voice-input__error {
       color: $color-error;
     }
+  }
+}
+
+// Điện thoại: micro thành nút tròn nổi góc phải, ngay trên nút Lưu (ghim trên thanh tab), trong tầm ngón cái
+@media (max-width: 899.98px) {
+  .voice-input .voice-input__button {
+    position: fixed;
+    right: 12px;
+    bottom: calc(56px + 8px + 52px + 12px + env(safe-area-inset-bottom));
+    z-index: 700;
+    width: 52px;
+    height: 52px;
+    font-size: 26px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  }
+
+  // Công tắc đọc xác nhận nằm trong menu ☰
+  .voice-input .voice-input__status .voice-input__readback {
+    display: none;
   }
 }
 

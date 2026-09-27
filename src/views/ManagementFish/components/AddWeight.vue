@@ -49,7 +49,7 @@
       <div v-if="netPreview" class="net-preview" :class="{ 'net-preview--error': netPreview.isError }">
         {{ netPreview.text }}
       </div>
-      <!-- Micro đặt ngay dưới ô số cân (việc hay nói nhất là số cân) -->
+      <!-- Micro đặt ngay dưới ô số cân (việc hay nói nhất là số cân); trên điện thoại thành nút nổi phía trên nút Lưu -->
       <VoiceInput
         ref="voiceInputRef"
         :fishTypes="lstDataFishType"
