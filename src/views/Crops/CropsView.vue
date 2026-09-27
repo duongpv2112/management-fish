@@ -23,7 +23,12 @@
     <div v-if="closedCrops.length > 0" class="crops__closed">
       <h2>Vụ đã kết thúc</h2>
       <div v-for="crop in closedCrops" :key="crop._id" class="crops__closed-item">
-        <span class="crops__closed-name">{{ crop.cropName }}</span>
+        <span class="crops__closed-name">
+          {{ crop.cropName }}
+          <span v-if="crop.pond?.pondName && !crop.cropName.includes(crop.pond.pondName)" class="crops__closed-pond">
+            · {{ crop.pond.pondName }}
+          </span>
+        </span>
         <span class="crops__closed-dates">
           {{ formatDateOnly(crop.startDate) }} – {{ formatDateOnly(crop.endDate) }}
         </span>
@@ -154,6 +159,11 @@ onMounted(loadData);
 
   .crops__closed-name {
     font-weight: 600;
+  }
+
+  .crops__closed-pond {
+    font-weight: 400;
+    opacity: 0.75;
   }
 
   .crops__closed-dates {

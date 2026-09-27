@@ -79,3 +79,10 @@ test("lỗi tải → thông báo lỗi", async () => {
   const wrapper = await mountView();
   expect(wrapper.find(".crops__error").text()).toBe("Không thể tải danh sách ao, vui lòng thử lại sau.");
 });
+
+test("vụ đã kết thúc hiện cả tên ao (tên vụ tự đặt không chứa tên ao)", async () => {
+  vi.mocked(CropAPI.getCrops).mockResolvedValue({ data: [{ ...closedCrop, cropName: "Vụ xuân" }] });
+  const closed = (await mountView()).find(".crops__closed-item");
+  expect(closed.text()).toContain("Ao 2");
+  expect(closed.text()).toContain("Vụ xuân");
+});

@@ -110,7 +110,11 @@ const createSession = async () => {
 
   isSaving.value = true;
   try {
-    if (!crop) crop = (await CropAPI.createCrop({ pondId: selectedPondId.value }))?.data;
+    if (!crop) {
+      crop = (await CropAPI.createCrop({ pondId: selectedPondId.value }))?.data;
+      // Ghi nhận ngay: nếu tạo phiên lỗi, bấm lại sẽ dùng vụ này thay vì tạo vụ lần nữa
+      openCrops.value = [...openCrops.value, crop];
+    }
     const result = await WeighSessionAPI.createWeighSession({ buyerName: buyerName.value.trim(), cropId: crop._id });
     emit("created", result?.data);
     emit("close");

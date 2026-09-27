@@ -104,3 +104,23 @@ test("lỗi từ server → hiện message, không emit", async () => {
   expect(wrapper.find(".new-session__error").text()).toBe("Vụ đã kết thúc, hãy chọn vụ đang nuôi!");
   expect(wrapper.emitted("created")).toBeUndefined();
 });
+
+test("tạo vụ xong nhưng tạo phiên lỗi → thử lại dùng luôn vụ vừa tạo, không hỏi/tạo vụ lần nữa", async () => {
+  const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+  vi.mocked(CropAPI.createCrop).mockResolvedValue({ data: { _id: "c2", cropName: "Ao 2 · Vụ 09/2026", pond: ao2 } });
+  vi.mocked(WeighSessionAPI.createWeighSession)
+    .mockRejectedValueOnce(new Error("Mất kết nối"))
+    .mockResolvedValueOnce({ data: { _id: "s3" } });
+  const wrapper = await mountSheet();
+  await pickPond(wrapper, "Ao 2");
+  await submit(wrapper);
+  expect(wrapper.find(".new-session__error").text()).toBe("Mất kết nối");
+  const ao2Item = wrapper.findAll(".choice-grid__item").find((node) => node.text().includes("Ao 2"));
+  expect(ao2Item.find(".choice-grid__sub").text()).toBe("Ao 2 · Vụ 09/2026");
+
+  await submit(wrapper);
+  expect(CropAPI.createCrop).toHaveBeenCalledTimes(1);
+  expect(confirmSpy).toHaveBeenCalledTimes(1);
+  expect(WeighSessionAPI.createWeighSession).toHaveBeenLastCalledWith({ buyerName: "", cropId: "c2" });
+  expect(wrapper.emitted("created")).toEqual([[{ _id: "s3" }]]);
+});
