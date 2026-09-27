@@ -30,6 +30,8 @@
 <script setup>
 import { computed, ref } from "vue";
 
+import { applyTypingFormat } from "@/common/moneyTyping";
+
 const props = defineProps({
   idControl: {
     type: String,
@@ -75,7 +77,12 @@ const props = defineProps({
   errorMessage: {
     type: String,
     default: "",
-  }
+  },
+  // Hàm định dạng chữ ngay khi đang gõ (vd. formatMoneyTyping thêm dấu "." hàng nghìn); giữ con trỏ đúng chỗ
+  formatter: {
+    type: Function,
+    default: null,
+  },
 });
 
 const emit = defineEmits(['update', 'enter']);
@@ -90,7 +97,8 @@ const handleBlurInput = () => {
 };
 
 const handleChangeInput = ($event) => {
-  emit("update", $event.target.value);
+  const value = props.formatter ? applyTypingFormat($event.target, props.formatter) : $event.target.value;
+  emit("update", value);
 };
 
 const handleKeyPress = ($event) => {

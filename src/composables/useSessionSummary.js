@@ -8,6 +8,7 @@ import {
   formatPriceInput,
   parseMoney,
 } from "@/common/currency";
+import { applyTypingFormat, formatMoneyTyping } from "@/common/moneyTyping";
 
 /**
  * Tổng hợp tiền của một phiên: tải, lưu đơn giá, đổi loại tiền.
@@ -27,6 +28,11 @@ export const useSessionSummary = (sessionIdRef, refreshKeyRef) => {
   const currencySymbol = computed(() => (CURRENCIES[currency.value] ?? CURRENCIES[DEFAULT_CURRENCY]).symbol);
   const formatMoney = (value) => formatCurrencyMoney(value, currency.value);
   const formatUnitPrice = (value) => formatPriceInput(value, currency.value);
+
+  // Đang gõ đơn giá: VND tự thêm dấu "." ngăn cách hàng nghìn, giữ con trỏ đúng chỗ
+  const handlePriceInput = (line, event) => {
+    priceInputs[line.fishTypeId] = applyTypingFormat(event.target, (text) => formatMoneyTyping(text, currency.value));
+  };
 
   const resetPriceInputs = () => {
     Object.keys(priceInputs).forEach((key) => delete priceInputs[key]);
@@ -113,6 +119,7 @@ export const useSessionSummary = (sessionIdRef, refreshKeyRef) => {
     formatMoney,
     loadSummary,
     savePrice,
+    handlePriceInput,
     changeCurrency,
   };
 };

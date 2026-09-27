@@ -252,3 +252,11 @@ test("thêm từ vụ đã kết thúc: đổi sang Chung rồi vẫn chọn l�
   await pick(wrapper, "expenseCrop", "Chung");
   expect(wrapper.findAll("#expenseCrop .choice-grid__text").map((n) => n.text())).toContain("Ao 2");
 });
+
+test("đang gõ đơn giá và số tiền → tự thêm dấu . ngăn cách hàng nghìn", async () => {
+  const wrapper = await mountForm({ defaultCropId: null });
+  await wrapper.find("#expense-amount").setValue("600000");
+  expect(wrapper.find("#expense-amount").element.value).toBe("600.000");
+  await wrapper.find("#expense-unitPrice").setValue("15000");
+  expect(wrapper.find("#expense-unitPrice").element.value).toBe("15.000");
+});

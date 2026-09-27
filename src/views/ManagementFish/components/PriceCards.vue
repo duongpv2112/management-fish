@@ -32,7 +32,7 @@
               placeholder="Nhập giá"
               :value="priceInputs[line.fishTypeId]"
               :disabled="isSaving"
-              @input="priceInputs[line.fishTypeId] = $event.target.value"
+              @input="handlePriceInput(line, $event)"
               @blur="savePrice(line)"
               @keydown.enter="$event.target.blur()"
             />
@@ -90,8 +90,18 @@ const props = defineProps({
   },
 });
 
-const { summary, priceInputs, errorMessage, isSaving, currency, currencySymbol, formatMoney, savePrice, changeCurrency } =
-  useSessionSummary(toRef(props, "sessionId"), toRef(props, "refreshKey"));
+const {
+  summary,
+  priceInputs,
+  errorMessage,
+  isSaving,
+  currency,
+  currencySymbol,
+  formatMoney,
+  savePrice,
+  handlePriceInput,
+  changeCurrency,
+} = useSessionSummary(toRef(props, "sessionId"), toRef(props, "refreshKey"));
 
 const isChartOpen = ref(false);
 

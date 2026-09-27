@@ -108,3 +108,9 @@ test("chưa có phiên → thông báo, không gọi API", async () => {
   expect(WeighSessionAPI.getSessionSummary).not.toHaveBeenCalled();
   expect(wrapper.text()).toContain("Chưa có phiên cân.");
 });
+
+test("đang gõ đơn giá VND trên thẻ → tự thêm dấu . ngăn cách hàng nghìn", async () => {
+  const wrapper = await mountCards();
+  await wrapper.find("#price-card-f2").setValue("35000");
+  expect(wrapper.find("#price-card-f2").element.value).toBe("35.000");
+});

@@ -82,6 +82,8 @@
           :modelValue="unitPriceText"
           placeholderText="Không bắt buộc"
           :typeInput="1"
+          inputmode="numeric"
+          :formatter="formatMoneyTyping"
           height="44px"
           @update="($event) => (unitPriceText = $event)"
         />
@@ -107,6 +109,8 @@
         :modelValue="amountText"
         placeholderText="Ví dụ: 600.000"
         :typeInput="1"
+        inputmode="numeric"
+        :formatter="formatMoneyTyping"
         height="44px"
         @update="($event) => (amountText = $event)"
       />
@@ -156,6 +160,7 @@ import CropAPI from "@/services/cropAPI";
 import ExpenseAPI from "@/services/expenseAPI";
 import { common } from "@/common/common";
 import { formatMoney, formatPriceInput, parseMoney } from "@/common/currency";
+import { formatMoneyTyping } from "@/common/moneyTyping";
 import { todayInputValue } from "@/common/dateInput";
 import { normalizeVi } from "@/voice/vietnameseNumber";
 

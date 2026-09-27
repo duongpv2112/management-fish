@@ -211,3 +211,12 @@ test("đổi loại tiền lỗi: hiện message, ô chọn trở về loại c�
   expect(wrapper.find(".error-message").text()).toBe("Loại tiền không hợp lệ!");
   expect(wrapper.find("#currencySelect").text()).toBe("VND (đ)");
 });
+
+test("đang gõ đơn giá VND → tự thêm dấu . ngăn cách hàng nghìn", async () => {
+  const wrapper = await mountSummary();
+  await wrapper.find("#price-f2").setValue("40000");
+  expect(wrapper.find("#price-f2").element.value).toBe("40.000");
+  await wrapper.find("#price-f2").setValue("1250000");
+  expect(wrapper.find("#price-f2").element.value).toBe("1.250.000");
+  expect(wrapper.find("#price-f2").attributes("inputmode")).toBe("numeric");
+});
