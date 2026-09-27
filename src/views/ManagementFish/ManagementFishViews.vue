@@ -343,6 +343,11 @@ const handleWeightAdded = async () => {
 
 onMounted(async () => {
   await loadSessions({ selectOpen: true });
+  // Link từ báo cáo vụ (?session=<id>) mở đúng phiên đó, ví dụ để nhập giá còn thiếu
+  const linkedSessionId = route?.query.session;
+  if (linkedSessionId && sessions.value.some((session) => session._id === linkedSessionId)) {
+    selectedSessionId.value = linkedSessionId;
+  }
   await Promise.all([loadData(), loadBasketTypes()]);
 });
 </script>

@@ -235,3 +235,10 @@ test("tab Bảng: thẻ nhận dữ liệu phiên; chạm số cân → mở h�
   await flushPromises();
   expect(wrapper.findComponent({ name: "WeightEditDialog" }).exists()).toBe(true);
 });
+
+test("?session=<id> → mở đúng phiên đó; id không có → phiên đang mở", async () => {
+  await mountAt("/?session=s1");
+  expect(FishTypeAPI.getDataFish).toHaveBeenLastCalledWith("s1");
+  await mountAt("/?session=khong-co");
+  expect(FishTypeAPI.getDataFish).toHaveBeenLastCalledWith("s2");
+});

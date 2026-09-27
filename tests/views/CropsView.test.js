@@ -3,12 +3,20 @@ import { mount, flushPromises } from "@vue/test-utils";
 
 vi.mock("@/services/pondAPI", () => ({ default: { getPonds: vi.fn() } }));
 vi.mock("@/services/cropAPI", () => ({
-  default: { getCrops: vi.fn(), createCrop: vi.fn(), closeCrop: vi.fn() },
+  default: { getCrops: vi.fn(), createCrop: vi.fn(), closeCrop: vi.fn(), getCropReport: vi.fn() },
+}));
+vi.mock("@/services/expenseAPI", () => ({
+  default: { getExpenseSuggestions: vi.fn(async () => ({ data: [] })), deleteExpense: vi.fn() },
+}));
+vi.mock("@/services/expenseCategoryAPI", () => ({
+  default: { getExpenseCategories: vi.fn(async () => ({ data: [] })) },
 }));
 
+import { createRouter, createMemoryHistory } from "vue-router";
 import PondAPI from "@/services/pondAPI";
 import CropAPI from "@/services/cropAPI";
 import CropsView from "@/views/Crops/CropsView.vue";
+import ExpenseForm from "@/views/Expenses/components/ExpenseForm.vue";
 
 const ao1 = { _id: "p1", pondName: "Ao 1" };
 const ao2 = { _id: "p2", pondName: "Ao 2" };
@@ -26,6 +34,73 @@ beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(PondAPI.getPonds).mockResolvedValue({ data: [ao1, ao2] });
   vi.mocked(CropAPI.getCrops).mockResolvedValue({ data: [openCrop, closedCrop] });
+  vi.mocked(CropAPI.getCropReport).mockResolvedValue({
+    data: { revenue: { total: 12000000 }, expense: { total: 8000000 }, profit: 4000000 },
+  });
+});
+
+const mountWithRouter = async () => {
+  const Empty = { template: "<div />" };
+  const router = createRouter({
+    history: createMemoryHistory(),
+    routes: [
+      { path: "/vu-nuoi", name: "crops", component: Empty },
+      { path: "/vu-nuoi/:cropId", name: "crop-report", component: Empty },
+    ],
+  });
+  router.push("/vu-nuoi");
+  await router.isReady();
+  const wrapper = mount(CropsView, { global: { plugins: [router] } });
+  await flushPromises();
+  return { wrapper, router };
+};
+
+test("vụ đang nuôi: thẻ hiện Thu, Chi, Lãi tạm tính từ báo cáo vụ", async () => {
+  const card = (await mountView()).findAll(".pond-card")[0];
+  expect(CropAPI.getCropReport).toHaveBeenCalledWith("c1");
+  expect(CropAPI.getCropReport).toHaveBeenCalledTimes(1);
+  expect(card.text()).toContain("Thu");
+  expect(card.text()).toContain("12.000.000 đ");
+  expect(card.text()).toContain("8.000.000 đ");
+  expect(card.text()).toContain("Lãi tạm tính");
+  expect(card.text()).toContain("4.000.000 đ");
+});
+
+test("lỗ tạm tính", async () => {
+  vi.mocked(CropAPI.getCropReport).mockResolvedValue({
+    data: { revenue: { total: 0 }, expense: { total: 500000 }, profit: -500000 },
+  });
+  const card = (await mountView()).findAll(".pond-card")[0];
+  expect(card.text()).toContain("Lỗ tạm tính");
+  expect(card.text()).toContain("500.000 đ");
+  expect(card.text()).not.toContain("-500");
+});
+
+test("báo cáo lỗi → thẻ vẫn hiện, không có số tiền", async () => {
+  vi.mocked(CropAPI.getCropReport).mockRejectedValue(new Error("x"));
+  const card = (await mountView()).findAll(".pond-card")[0];
+  expect(card.text()).toContain("Ao 1 · Vụ 09/2026");
+  expect(card.text()).not.toContain("tạm tính");
+});
+
+test("bấm thẻ ao / dòng vụ đã kết thúc → trang báo cáo vụ", async () => {
+  const { wrapper, router } = await mountWithRouter();
+  await wrapper.findAll(".pond-card")[0].find(".pond-card__body").trigger("click");
+  await flushPromises();
+  expect(router.currentRoute.value.fullPath).toBe("/vu-nuoi/c1");
+
+  await router.push("/vu-nuoi");
+  await wrapper.find(".crops__closed-item").trigger("click");
+  await flushPromises();
+  expect(router.currentRoute.value.fullPath).toBe("/vu-nuoi/c0");
+});
+
+test("＋ Chi phí trên thẻ mở form với vụ chọn sẵn", async () => {
+  const wrapper = await mountView();
+  await wrapper.findAll(".pond-card")[0].find(".btn-add-expense button").trigger("click");
+  const form = wrapper.findComponent(ExpenseForm);
+  expect(form.props("open")).toBe(true);
+  expect(form.props("defaultCropId")).toBe("c1");
 });
 
 const mountView = async () => {

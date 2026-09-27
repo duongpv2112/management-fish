@@ -49,7 +49,8 @@ const links = [
   { name: "log", text: "Nhật ký" },
 ];
 
-const title = computed(() => links.find((link) => link.name === route.name)?.text ?? "");
+// Trang ngoài menu (vd. báo cáo vụ) lấy tiêu đề từ route.meta.title
+const title = computed(() => links.find((link) => link.name === route.name)?.text ?? route.meta?.title ?? "");
 
 const logout = () => {
   isMenuOpen.value = false;

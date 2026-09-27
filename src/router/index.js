@@ -5,6 +5,7 @@ import LoginView from "@/views/Login/LoginView.vue";
 import ManagementTracking from "@/views/ManagementTracking/ManagementTracking.vue";
 import CropsView from "@/views/Crops/CropsView.vue";
 import ExpensesView from "@/views/Expenses/ExpensesView.vue";
+import CropReportView from "@/views/Crops/CropReportView.vue";
 import { getToken } from "@/common/auth";
 
 // Hash history để tải lại trang (ví dụ /#/danh-muc) trên GitHub Pages vẫn vào đúng trang
@@ -13,6 +14,7 @@ const router = createRouter({
   routes: [
     { path: "/", name: "weigh", component: ManagementFishViews },
     { path: "/vu-nuoi", name: "crops", component: CropsView },
+    { path: "/vu-nuoi/:cropId", name: "crop-report", component: CropReportView, meta: { title: "Báo cáo vụ" } },
     { path: "/chi-phi", name: "expenses", component: ExpensesView },
     { path: "/danh-muc", name: "catalog", component: CatalogView },
     { path: "/nhat-ky", name: "log", component: ManagementTracking },

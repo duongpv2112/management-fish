@@ -102,3 +102,18 @@ test("nút hành động dạng thêm mới không có mũi tên ▾", async () 
   await flushPromises();
   expect(wrapper.find(".app-top-bar__action").text()).toBe("Phiên 1 ▾");
 });
+
+test("trang không có trong menu dùng route.meta.title", async () => {
+  const router = createRouter({
+    history: createMemoryHistory(),
+    routes: [
+      { path: "/", name: "weigh", component: Empty },
+      { path: "/vu-nuoi/:cropId", name: "crop-report", component: Empty, meta: { title: "Báo cáo vụ" } },
+    ],
+  });
+  router.push("/vu-nuoi/c1");
+  await router.isReady();
+  const wrapper = mount(AppTopBar, { global: { plugins: [router] } });
+  await flushPromises();
+  expect(wrapper.find(".app-top-bar__title").text()).toBe("Báo cáo vụ");
+});
