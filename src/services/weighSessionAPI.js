@@ -26,6 +26,11 @@ const WeighSessionAPI = {
     return await put(`/weigh-sessions/updateSessionCurrency/${id}`, { currency });
   },
 
+  // Gán vụ (ao) cho phiên; cropId null = bỏ gán
+  async updateSessionCrop(id, cropId) {
+    return await put(`/weigh-sessions/updateSessionCrop/${id}`, { cropId });
+  },
+
   async getSessionSummary(id) {
     return await get(`/weigh-sessions/getSessionSummary/${id}`);
   },

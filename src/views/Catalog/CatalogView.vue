@@ -4,6 +4,7 @@
     <div class="catalog__container">
       <FishTypeManager />
       <BasketTypeManager />
+      <PondManager />
     </div>
   </div>
 </template>
@@ -11,6 +12,7 @@
 <script setup>
 import FishTypeManager from "./components/FishTypeManager.vue";
 import BasketTypeManager from "./components/BasketTypeManager.vue";
+import PondManager from "./components/PondManager.vue";
 </script>
 
 <style lang="scss" scoped>

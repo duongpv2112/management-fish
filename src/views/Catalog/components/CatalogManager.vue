@@ -101,7 +101,8 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  // [{ key, label, type: "text" | "number", placeholder, invalidMessage }]; trường text đầu tiên là tên
+  // [{ key, label, type: "text" | "number", optional?, placeholder, invalidMessage }]; trường text đầu tiên là tên.
+  // optional (chỉ cho "number"): bỏ trống gửi null
   fields: {
     type: Array,
     required: true,
@@ -154,6 +155,11 @@ const buildPayload = (values) => {
   const data = {};
   for (const field of props.fields) {
     if (field.type === "number") {
+      // Trường số không bắt buộc: bỏ trống thì gửi null
+      if (field.optional && (values[field.key] ?? "").toString().trim() === "") {
+        data[field.key] = null;
+        continue;
+      }
       const value = common.parseDecimal(values[field.key]);
       if (value === null || value < 0) {
         return { message: field.invalidMessage };
@@ -201,7 +207,7 @@ const startEdit = (item) => {
   clearMessages();
   editingId.value = item._id;
   props.fields.forEach((field) => {
-    editingItem[field.key] = item[field.key] === undefined ? "" : String(item[field.key]);
+    editingItem[field.key] = item[field.key] === undefined || item[field.key] === null ? "" : String(item[field.key]);
   });
 };
 
