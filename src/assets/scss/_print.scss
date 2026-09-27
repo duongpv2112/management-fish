@@ -1,5 +1,6 @@
 // Phiếu in dùng chung cho bảng tiền (máy tính) và thẻ tiền (điện thoại):
-// khi in chỉ in vùng .price-summary__print-area (tên phiên, người mua, ngày, bảng tổng hợp)
+// khi in chỉ in vùng .price-summary__print-area (tên phiên, người mua, ngày, bảng tổng hợp).
+// Báo cáo vụ / báo cáo tổng dùng class .print-area cho cùng quy tắc.
 .screen-hidden {
   display: none;
 }
@@ -10,11 +11,14 @@
   }
 
   .price-summary__print-area,
-  .price-summary__print-area * {
+  .price-summary__print-area *,
+  .print-area,
+  .print-area * {
     visibility: visible;
   }
 
-  .price-summary__print-area {
+  .price-summary__print-area,
+  .print-area {
     position: absolute;
     top: 0;
     left: 0;

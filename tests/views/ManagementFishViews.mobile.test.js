@@ -16,6 +16,8 @@ vi.mock("@/services/basketTypeAPI", () => ({
   default: { getBasketTypes: vi.fn(async () => ({ data: [] })) },
 }));
 vi.mock("@/services/fishWeightAPI", () => ({ default: { saveFishWeight: vi.fn(), deleteFishWeight: vi.fn() } }));
+vi.mock("@/services/pondAPI", () => ({ default: { getPonds: vi.fn(async () => ({ data: [] })) } }));
+vi.mock("@/services/cropAPI", () => ({ default: { getCrops: vi.fn(async () => ({ data: [] })) } }));
 
 import WeighSessionAPI from "@/services/weighSessionAPI";
 import FishTypeAPI from "@/services/fishTypeAPI";
@@ -25,6 +27,9 @@ import MobileTabBar from "@/views/ManagementFish/components/MobileTabBar.vue";
 import PriceSummary from "@/views/ManagementFish/components/PriceSummary.vue";
 import DataViewer from "@/views/ManagementFish/components/DataViewer.vue";
 import SessionSheet from "@/views/ManagementFish/components/SessionSheet.vue";
+import SessionBar from "@/views/ManagementFish/components/SessionBar.vue";
+import NewSessionSheet from "@/views/ManagementFish/components/NewSessionSheet.vue";
+import SessionCropSheet from "@/views/ManagementFish/components/SessionCropSheet.vue";
 import FishWeightCards from "@/views/ManagementFish/components/FishWeightCards.vue";
 import PriceCards from "@/views/ManagementFish/components/PriceCards.vue";
 import { topBarAction, clearTopBarAction } from "@/common/topBarAction";
@@ -145,13 +150,61 @@ test("phiên đã kết thúc: tab Cân hiện thông báo, nút về phiên đa
   expect(FishTypeAPI.getDataFish).toHaveBeenLastCalledWith("s2");
 });
 
-test("phiên đã kết thúc, không còn phiên mở: chỉ có nút Phiên mới (mở danh sách phiên)", async () => {
+test("phiên đã kết thúc, không còn phiên mở: chỉ có nút Phiên mới (mở thẳng sheet chọn ao)", async () => {
   vi.mocked(WeighSessionAPI.getWeighSessions).mockResolvedValue({ data: [closedSession] });
   const { wrapper } = await mountAt("/");
   const panel = wrapper.find(".session-closed-panel");
   expect(panel.find(".btn-go-open").exists()).toBe(false);
   await panel.find(".btn-new-session-mobile").trigger("click");
-  expect(wrapper.findComponent(SessionSheet).props("open")).toBe(true);
+  expect(wrapper.findComponent(NewSessionSheet).props("open")).toBe(true);
+});
+
+test("điện thoại: Phiên mới trong danh sách phiên → mở sheet chọn ao; tạo xong tải lại và chọn phiên mở", async () => {
+  const { wrapper } = await mountAt("/");
+  wrapper.findComponent(SessionSheet).vm.$emit("requestNew");
+  await flushPromises();
+  expect(wrapper.findComponent(NewSessionSheet).props("open")).toBe(true);
+
+  const s3 = { _id: "s3", sessionName: "Phiên 27/09/2026", status: "open" };
+  vi.mocked(WeighSessionAPI.getWeighSessions).mockResolvedValue({ data: [s3, { ...openSession, status: "closed" }] });
+  wrapper.findComponent(NewSessionSheet).vm.$emit("created", s3);
+  await flushPromises();
+  expect(FishTypeAPI.getDataFish).toHaveBeenLastCalledWith("s3");
+});
+
+test("điện thoại: Chọn ao → mở sheet gán ao cho phiên đang chọn; gán xong tải lại, giữ phiên đang xem", async () => {
+  const { wrapper } = await mountAt("/");
+  wrapper.findComponent(SessionSheet).vm.$emit("select", "s1");
+  await flushPromises();
+  wrapper.findComponent(SessionSheet).vm.$emit("requestCrop");
+  await flushPromises();
+  const cropSheet = wrapper.findComponent(SessionCropSheet);
+  expect(cropSheet.props("open")).toBe(true);
+  expect(cropSheet.props("session")._id).toBe("s1");
+
+  const pond = { _id: "p1", pondName: "Ao 1" };
+  vi.mocked(WeighSessionAPI.getWeighSessions).mockResolvedValue({
+    data: [openSession, { ...closedSession, crop: { _id: "c1", cropName: "Vụ", pond } }],
+  });
+  const calls = vi.mocked(WeighSessionAPI.getWeighSessions).mock.calls.length;
+  cropSheet.vm.$emit("updated");
+  await flushPromises();
+  expect(WeighSessionAPI.getWeighSessions).toHaveBeenCalledTimes(calls + 1);
+  expect(topBarAction.label).toBe("Phiên 25/09/2026 · Ao 1 · đã kết thúc");
+});
+
+test("máy tính: SessionBar Phiên mới / Chọn ao mở đúng sheet", async () => {
+  setMobile(false);
+  const { wrapper } = await mountAt("/");
+  const bar = wrapper.findComponent(SessionBar);
+  bar.vm.$emit("requestNew");
+  await flushPromises();
+  expect(wrapper.findComponent(NewSessionSheet).props("open")).toBe(true);
+
+  bar.vm.$emit("requestCrop");
+  await flushPromises();
+  expect(wrapper.findComponent(SessionCropSheet).props("open")).toBe(true);
+  expect(wrapper.findComponent(SessionCropSheet).props("session")._id).toBe("s2");
 });
 
 test("máy tính: không có thanh tab, có cả bảng và form cân", async () => {
@@ -181,4 +234,11 @@ test("tab Bảng: thẻ nhận dữ liệu phiên; chạm số cân → mở h�
   cards.vm.$emit("editItem", { _id: "w1", fishType: "f1", fishWeight: 20 });
   await flushPromises();
   expect(wrapper.findComponent({ name: "WeightEditDialog" }).exists()).toBe(true);
+});
+
+test("?session=<id> → mở đúng phiên đó; id không có → phiên đang mở", async () => {
+  await mountAt("/?session=s1");
+  expect(FishTypeAPI.getDataFish).toHaveBeenLastCalledWith("s1");
+  await mountAt("/?session=khong-co");
+  expect(FishTypeAPI.getDataFish).toHaveBeenLastCalledWith("s2");
 });

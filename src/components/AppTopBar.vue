@@ -7,7 +7,7 @@
       class="app-top-bar__action"
       @click="topBarAction.onClick?.()"
     >
-      {{ topBarAction.label }} ▾
+      {{ topBarAction.label }}<template v-if="topBarAction.chevron"> ▾</template>
     </button>
     <button type="button" class="app-top-bar__menu" aria-label="Mở menu" @click="isMenuOpen = true">☰</button>
 
@@ -43,11 +43,15 @@ const isMenuOpen = ref(false);
 
 const links = [
   { name: "weigh", text: "Cân cá" },
+  { name: "crops", text: "Vụ nuôi" },
+  { name: "expenses", text: "Chi phí" },
+  { name: "report", text: "Báo cáo" },
   { name: "catalog", text: "Danh mục" },
   { name: "log", text: "Nhật ký" },
 ];
 
-const title = computed(() => links.find((link) => link.name === route.name)?.text ?? "");
+// Trang ngoài menu (vd. báo cáo vụ) lấy tiêu đề từ route.meta.title
+const title = computed(() => links.find((link) => link.name === route.name)?.text ?? route.meta?.title ?? "");
 
 const logout = () => {
   isMenuOpen.value = false;

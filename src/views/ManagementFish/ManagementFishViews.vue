@@ -15,7 +15,7 @@
         >
           Về phiên đang mở
         </button>
-        <button type="button" class="btn-new-session-mobile" @click="isSessionSheetOpen = true">Phiên mới</button>
+        <button type="button" class="btn-new-session-mobile" @click="isNewSessionOpen = true">Phiên mới</button>
       </div>
       <template v-else>
         <AddWeight
@@ -47,8 +47,16 @@
       :selectedId="selectedSessionId"
       @close="isSessionSheetOpen = false"
       @select="selectSession"
-      @created="handleSessionChanged"
       @closed="handleSessionChanged"
+      @requestNew="isNewSessionOpen = true"
+      @requestCrop="isSessionCropOpen = true"
+    />
+    <NewSessionSheet :open="isNewSessionOpen" @close="isNewSessionOpen = false" @created="handleSessionChanged" />
+    <SessionCropSheet
+      :open="isSessionCropOpen"
+      :session="selectedSession ?? null"
+      @close="isSessionCropOpen = false"
+      @updated="handleSessionCropUpdated"
     />
     <WeightEditDialog
       v-if="editingItem"
@@ -69,8 +77,16 @@
         :sessions="sessions"
         :selectedId="selectedSessionId"
         @select="selectSession"
-        @created="handleSessionChanged"
         @closed="handleSessionChanged"
+        @requestNew="isNewSessionOpen = true"
+        @requestCrop="isSessionCropOpen = true"
+      />
+      <NewSessionSheet :open="isNewSessionOpen" @close="isNewSessionOpen = false" @created="handleSessionChanged" />
+      <SessionCropSheet
+        :open="isSessionCropOpen"
+        :session="selectedSession ?? null"
+        @close="isSessionCropOpen = false"
+        @updated="handleSessionCropUpdated"
       />
     </div>
     <div class="management-fish__container">
@@ -160,6 +176,8 @@ import SessionSheet from "./components/SessionSheet.vue";
 import FishWeightCards from "./components/FishWeightCards.vue";
 import PriceCards from "./components/PriceCards.vue";
 import SessionBar from "./components/SessionBar.vue";
+import NewSessionSheet from "./components/NewSessionSheet.vue";
+import SessionCropSheet from "./components/SessionCropSheet.vue";
 import DataViewer from "./components/DataViewer.vue";
 import AddWeight from "./components/AddWeight.vue";
 import StatisticData from "./components/StatisticData.vue";
@@ -189,6 +207,9 @@ const openSession = computed(() => sessions.value.find((session) => session.stat
 
 const isMobile = useIsMobile();
 const isSessionSheetOpen = ref(false);
+// Sheet chọn ao khi tạo phiên mới / gán ao cho phiên đang chọn (dùng cho cả điện thoại và máy tính)
+const isNewSessionOpen = ref(false);
+const isSessionCropOpen = ref(false);
 
 // Tab điện thoại lưu trong ?tab= để tải lại trang/Back vẫn đúng tab.
 // inject thay cho useRoute để component vẫn chạy khi không có router (test cũ)
@@ -309,6 +330,11 @@ const handleSessionChanged = async () => {
   await loadData();
 };
 
+// Gán ao cho phiên: chỉ cần tải lại danh sách phiên (tên ao), giữ phiên đang xem
+const handleSessionCropUpdated = async () => {
+  await loadSessions();
+};
+
 const handleWeightAdded = async () => {
   if (!selectedSession.value) await loadSessions({ selectOpen: true });
   summaryRefreshKey.value++;
@@ -317,6 +343,11 @@ const handleWeightAdded = async () => {
 
 onMounted(async () => {
   await loadSessions({ selectOpen: true });
+  // Link từ báo cáo vụ (?session=<id>) mở đúng phiên đó, ví dụ để nhập giá còn thiếu
+  const linkedSessionId = route?.query.session;
+  if (linkedSessionId && sessions.value.some((session) => session._id === linkedSessionId)) {
+    selectedSessionId.value = linkedSessionId;
+  }
   await Promise.all([loadData(), loadBasketTypes()]);
 });
 </script>

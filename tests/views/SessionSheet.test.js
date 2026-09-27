@@ -22,9 +22,15 @@ beforeEach(() => {
   vi.restoreAllMocks();
 });
 
+const withPond = {
+  ...sessions[0],
+  crop: { _id: "c1", cropName: "Ao 1 · Vụ 09/2026", pond: { _id: "p1", pondName: "Ao 1" } },
+};
+
 test("sessionLabel", () => {
   expect(sessionLabel(sessions[0])).toBe("Phiên 26/09/2026 · đang mở");
   expect(sessionLabel(sessions[1])).toBe("Phiên 25/09/2026 · đã kết thúc");
+  expect(sessionLabel(withPond)).toBe("Phiên 26/09/2026 · Ao 1 · đang mở");
   expect(sessionLabel(null)).toBe("Chưa có phiên");
 });
 
@@ -45,22 +51,24 @@ test("chọn phiên → emit select và close", async () => {
   expect(wrapper.emitted().close).toHaveLength(1);
 });
 
-test("Phiên mới: hỏi tên người mua → tạo phiên, emit created và close", async () => {
-  vi.spyOn(window, "prompt").mockReturnValue(" Anh Tuấn ");
-  vi.mocked(WeighSessionAPI.createWeighSession).mockResolvedValue({ success: true, data: { _id: "s3" } });
+test("Phiên mới → emit requestNew và close, không tự tạo phiên", async () => {
   const wrapper = mountSheet();
   await wrapper.find(".btn-sheet-new").trigger("click");
-  await flushPromises();
-  expect(WeighSessionAPI.createWeighSession).toHaveBeenCalledWith({ buyerName: "Anh Tuấn" });
-  expect(wrapper.emitted().created).toEqual([[{ _id: "s3" }]]);
+  expect(wrapper.emitted().requestNew).toHaveLength(1);
   expect(wrapper.emitted().close).toHaveLength(1);
+  expect(WeighSessionAPI.createWeighSession).not.toHaveBeenCalled();
 });
 
-test("Phiên mới: bấm Hủy ở hộp hỏi tên → không tạo", async () => {
-  vi.spyOn(window, "prompt").mockReturnValue(null);
-  const wrapper = mountSheet();
-  await wrapper.find(".btn-sheet-new").trigger("click");
-  expect(WeighSessionAPI.createWeighSession).not.toHaveBeenCalled();
+test("phiên đang chọn chưa có ao → Chọn ao; có ao → Đổi ao; bấm → emit requestCrop và close", async () => {
+  let wrapper = mountSheet();
+  expect(wrapper.find(".btn-sheet-crop").text()).toBe("Chọn ao");
+  await wrapper.find(".btn-sheet-crop").trigger("click");
+  expect(wrapper.emitted().requestCrop).toHaveLength(1);
+  expect(wrapper.emitted().close).toHaveLength(1);
+
+  wrapper = mountSheet({ sessions: [withPond, sessions[1]] });
+  expect(wrapper.find(".btn-sheet-crop").text()).toBe("Đổi ao");
+  expect(wrapper.findAll(".session-sheet__item")[0].text()).toContain("Ao 1");
 });
 
 test("Kết thúc phiên: hỏi xác nhận đúng câu; đồng ý → đóng phiên, emit closed", async () => {

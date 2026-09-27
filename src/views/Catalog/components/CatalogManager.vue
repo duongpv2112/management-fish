@@ -6,19 +6,28 @@
     <div class="success-message" v-if="successMessage">{{ successMessage }}</div>
 
     <div class="catalog-add">
-      <CPInput
-        v-for="field in fields"
-        :key="field.key"
-        class="catalog-add__field"
-        :idControl="`${idPrefix}-new-${field.key}`"
-        :labelControl="field.label"
-        :modelValue="newItem[field.key]"
-        :placeholderText="field.placeholder"
-        :typeInput="field.type === 'number' ? 1 : 2"
-        height="40px"
-        @update="($event) => (newItem[field.key] = $event)"
-        @enter="addItem"
-      />
+      <template v-for="field in fields" :key="field.key">
+        <div v-if="field.type === 'select'" class="catalog-add__field catalog-add__select">
+          <label class="catalog-add__label" :for="`${idPrefix}-new-${field.key}`">{{ field.label }}</label>
+          <CPSelect
+            :idControl="`${idPrefix}-new-${field.key}`"
+            v-model="newItem[field.key]"
+            :options="field.options"
+          />
+        </div>
+        <CPInput
+          v-else
+          class="catalog-add__field"
+          :idControl="`${idPrefix}-new-${field.key}`"
+          :labelControl="field.label"
+          :modelValue="newItem[field.key]"
+          :placeholderText="field.placeholder"
+          :typeInput="field.type === 'number' ? 1 : 2"
+          height="40px"
+          @update="($event) => (newItem[field.key] = $event)"
+          @enter="addItem"
+        />
+      </template>
       <CPButton
         class="catalog-add__button"
         typeButton="primary"
@@ -45,7 +54,14 @@
         <tr v-for="item in items" :key="item._id" class="catalog-row">
           <template v-if="editingId === item._id">
             <td v-for="field in fields" :key="field.key">
+              <CPSelect
+                v-if="field.type === 'select'"
+                :idControl="`${idPrefix}-edit-${field.key}`"
+                v-model="editingItem[field.key]"
+                :options="field.options"
+              />
               <CPInput
+                v-else
                 :idControl="`${idPrefix}-edit-${field.key}`"
                 :modelValue="editingItem[field.key]"
                 :typeInput="field.type === 'number' ? 1 : 2"
@@ -65,7 +81,7 @@
               :key="field.key"
               :class="`catalog-row__${field.type === 'number' ? 'number' : 'name'}`"
             >
-              {{ item[field.key] }}
+              {{ displayValue(field, item[field.key]) }}
             </td>
             <td class="catalog-table__actions">
               <CPButton class="btn-edit" textButton="Sửa" @click="startEdit(item)" />
@@ -83,6 +99,7 @@ import { onMounted, reactive, ref } from "vue";
 
 import CPInput from "@/components/InputComponent.vue";
 import CPButton from "@/components/ButtonComponent.vue";
+import CPSelect from "@/components/SelectComponent.vue";
 import { common } from "@/common/common";
 
 const props = defineProps({
@@ -101,7 +118,9 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  // [{ key, label, type: "text" | "number", placeholder, invalidMessage }]; trường text đầu tiên là tên
+  // [{ key, label, type: "text" | "number" | "select", optional?, placeholder, invalidMessage, options?, defaultValue? }];
+  // trường text đầu tiên là tên. optional (chỉ cho "number"): bỏ trống gửi null.
+  // select: options [{ value, label }] (CPSelect), bảng hiện label, gửi value; defaultValue là giá trị ban đầu khi thêm
   fields: {
     type: Array,
     required: true,
@@ -121,12 +140,16 @@ const successMessage = ref("");
 const editingId = ref(null);
 
 const emptyItem = () =>
-  Object.fromEntries(props.fields.map((field) => [field.key, ""]));
+  Object.fromEntries(props.fields.map((field) => [field.key, field.defaultValue ?? ""]));
 
 const newItem = reactive(emptyItem());
 const editingItem = reactive(emptyItem());
 
-const nameField = props.fields.find((field) => field.type !== "number");
+const nameField = props.fields.find((field) => field.type === "text");
+
+// Ô chọn hiện nhãn của lựa chọn thay vì giá trị lưu
+const displayValue = (field, value) =>
+  field.type === "select" ? field.options.find((option) => option.value === value)?.label ?? value : value;
 
 const clearMessages = () => {
   errorMessage.value = "";
@@ -153,7 +176,14 @@ const loadItems = async () => {
 const buildPayload = (values) => {
   const data = {};
   for (const field of props.fields) {
-    if (field.type === "number") {
+    if (field.type === "select") {
+      data[field.key] = values[field.key];
+    } else if (field.type === "number") {
+      // Trường số không bắt buộc: bỏ trống thì gửi null
+      if (field.optional && (values[field.key] ?? "").toString().trim() === "") {
+        data[field.key] = null;
+        continue;
+      }
       const value = common.parseDecimal(values[field.key]);
       if (value === null || value < 0) {
         return { message: field.invalidMessage };
@@ -201,7 +231,7 @@ const startEdit = (item) => {
   clearMessages();
   editingId.value = item._id;
   props.fields.forEach((field) => {
-    editingItem[field.key] = item[field.key] === undefined ? "" : String(item[field.key]);
+    editingItem[field.key] = item[field.key] === undefined || item[field.key] === null ? "" : String(item[field.key]);
   });
 };
 
@@ -278,6 +308,14 @@ onMounted(loadItems);
     .catalog-add__field {
       flex: 1;
       min-width: 140px;
+    }
+
+    // Cùng kiểu nhãn với CPInput
+    .catalog-add__label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #172b4d;
     }
   }
 
