@@ -13,6 +13,7 @@ const mountAt = async (path) => {
     routes: [
       { path: "/", name: "weigh", component: Empty },
       { path: "/vu-nuoi", name: "crops", component: Empty },
+      { path: "/chi-phi", name: "expenses", component: Empty },
       { path: "/danh-muc", name: "catalog", component: Empty },
       { path: "/nhat-ky", name: "log", component: Empty },
       { path: "/dang-nhap", name: "login", component: Empty },
@@ -35,6 +36,7 @@ test("tiêu đề theo trang", async () => {
   expect((await mountAt("/danh-muc")).wrapper.find(".app-top-bar__title").text()).toBe("Danh mục");
   expect((await mountAt("/nhat-ky")).wrapper.find(".app-top-bar__title").text()).toBe("Nhật ký");
   expect((await mountAt("/vu-nuoi")).wrapper.find(".app-top-bar__title").text()).toBe("Vụ nuôi");
+  expect((await mountAt("/chi-phi")).wrapper.find(".app-top-bar__title").text()).toBe("Chi phí");
 });
 
 test("nút hành động bên phải theo store; bấm gọi onClick; xóa thì biến mất", async () => {
@@ -90,4 +92,13 @@ test("Đăng xuất → xóa phiên đăng nhập và về trang đăng nhập",
 test("trang đăng nhập không có thanh trên", async () => {
   const { wrapper } = await mountAt("/dang-nhap");
   expect(wrapper.find(".app-top-bar").exists()).toBe(false);
+});
+
+test("nút hành động dạng thêm mới không có mũi tên ▾", async () => {
+  setTopBarAction("＋ Chi phí", () => {}, { chevron: false });
+  const { wrapper } = await mountAt("/chi-phi");
+  expect(wrapper.find(".app-top-bar__action").text()).toBe("＋ Chi phí");
+  setTopBarAction("Phiên 1", () => {});
+  await flushPromises();
+  expect(wrapper.find(".app-top-bar__action").text()).toBe("Phiên 1 ▾");
 });

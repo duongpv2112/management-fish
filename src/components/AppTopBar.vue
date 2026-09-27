@@ -7,7 +7,7 @@
       class="app-top-bar__action"
       @click="topBarAction.onClick?.()"
     >
-      {{ topBarAction.label }} ▾
+      {{ topBarAction.label }}<template v-if="topBarAction.chevron"> ▾</template>
     </button>
     <button type="button" class="app-top-bar__menu" aria-label="Mở menu" @click="isMenuOpen = true">☰</button>
 
@@ -44,6 +44,7 @@ const isMenuOpen = ref(false);
 const links = [
   { name: "weigh", text: "Cân cá" },
   { name: "crops", text: "Vụ nuôi" },
+  { name: "expenses", text: "Chi phí" },
   { name: "catalog", text: "Danh mục" },
   { name: "log", text: "Nhật ký" },
 ];
