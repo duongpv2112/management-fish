@@ -14,6 +14,7 @@ const mountAt = async (path) => {
       { path: "/", name: "weigh", component: Empty },
       { path: "/vu-nuoi", name: "crops", component: Empty },
       { path: "/chi-phi", name: "expenses", component: Empty },
+      { path: "/bao-cao", name: "report", component: Empty },
       { path: "/danh-muc", name: "catalog", component: Empty },
       { path: "/nhat-ky", name: "log", component: Empty },
       { path: "/dang-nhap", name: "login", component: Empty },
@@ -37,6 +38,7 @@ test("tiêu đề theo trang", async () => {
   expect((await mountAt("/nhat-ky")).wrapper.find(".app-top-bar__title").text()).toBe("Nhật ký");
   expect((await mountAt("/vu-nuoi")).wrapper.find(".app-top-bar__title").text()).toBe("Vụ nuôi");
   expect((await mountAt("/chi-phi")).wrapper.find(".app-top-bar__title").text()).toBe("Chi phí");
+  expect((await mountAt("/bao-cao")).wrapper.find(".app-top-bar__title").text()).toBe("Báo cáo");
 });
 
 test("nút hành động bên phải theo store; bấm gọi onClick; xóa thì biến mất", async () => {
@@ -66,6 +68,14 @@ test("menu ☰ mở danh sách trang và Đăng xuất", async () => {
   expect(sheetText).toContain("Danh mục");
   expect(sheetText).toContain("Nhật ký");
   expect(sheetText).toContain("Đăng xuất");
+  expect(wrapper.findAll(".bottom-sheet a").map((a) => a.text())).toEqual([
+    "Cân cá",
+    "Vụ nuôi",
+    "Chi phí",
+    "Báo cáo",
+    "Danh mục",
+    "Nhật ký",
+  ]);
 });
 
 test("chọn trang trong menu → chuyển trang và đóng menu", async () => {
