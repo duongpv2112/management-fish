@@ -20,7 +20,7 @@ const mountApp = async (isMobile) => {
   }));
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: ["weigh", "catalog", "log", "login"].map((name, index) => ({
+    routes: ["weigh", "crops", "catalog", "log", "login"].map((name, index) => ({
       path: index === 0 ? "/" : `/${name}`,
       name,
       component: { template: "<div />" },
