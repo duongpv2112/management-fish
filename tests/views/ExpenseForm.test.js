@@ -59,7 +59,7 @@ test("lưới nhóm chi và lưới ao; chọn sẵn theo defaultCropId", async 
   expect(wrapper.findAll("#expenseCategory .choice-grid__text").map((n) => n.text())).toEqual(["Giống", "Cám", "Điện"]);
   expect(wrapper.findAll("#expenseCrop .choice-grid__text").map((n) => n.text())).toEqual(["Ao 1", "Chung"]);
   expect(pressed(wrapper, "expenseCrop").text()).toBe("Ao 1");
-  expect(CropAPI.getCrops).toHaveBeenCalledWith({ status: "open" });
+  expect(CropAPI.getCrops).toHaveBeenCalledWith();
 
   wrapper = await mountForm({ defaultCropId: null });
   expect(pressed(wrapper, "expenseCrop").text()).toBe("Chung");
@@ -207,4 +207,48 @@ test("lỗi server → hiện message, không emit", async () => {
   await flushPromises();
   expect(wrapper.find(".expense-form__error").text()).toBe("Số tiền phải lớn hơn 0!");
   expect(wrapper.emitted("saved")).toBeUndefined();
+});
+
+test("thêm từ vụ đã kết thúc (defaultCropId) → vụ đó có trong lưới và được chọn", async () => {
+  vi.mocked(CropAPI.getCrops).mockResolvedValue({ data: [openCrop, closedCrop] });
+  const wrapper = await mountForm({ defaultCropId: "c0" });
+  expect(wrapper.findAll("#expenseCrop .choice-grid__text").map((n) => n.text())).toEqual(["Ao 1", "Ao 2", "Chung"]);
+  expect(pressed(wrapper, "expenseCrop").text()).toBe("Ao 2");
+});
+
+test("vụ đã kết thúc khác không hiện trong lưới khi thêm mới", async () => {
+  vi.mocked(CropAPI.getCrops).mockResolvedValue({ data: [openCrop, closedCrop] });
+  const wrapper = await mountForm({ defaultCropId: null });
+  expect(wrapper.findAll("#expenseCrop .choice-grid__text").map((n) => n.text())).toEqual(["Ao 1", "Chung"]);
+});
+
+test.each([
+  ["5.000", 5000],
+  ["12.500", 12500],
+  ["2,5", 2.5],
+  ["1.5", 1.5],
+])('số lượng "%s" → %s', async (text, expected) => {
+  const wrapper = await mountForm({ defaultCropId: null });
+  await pick(wrapper, "expenseCategory", "Giống");
+  await wrapper.find("#expense-quantity").setValue(text);
+  await wrapper.find("#expense-unitPrice").setValue("800");
+  await saveButton(wrapper).trigger("click");
+  await flushPromises();
+  expect(ExpenseAPI.createExpense).toHaveBeenCalledWith(
+    expect.objectContaining({ quantity: expected, amount: Math.round(expected * 800) })
+  );
+});
+
+test("sửa khoản chi có nhóm chi đã xóa → nhóm đó vẫn hiện và được chọn", async () => {
+  const deletedCategory = { _id: "old", categoryName: "Xăng dầu", metric: "none" };
+  const expense = { _id: "e1", date: "2026-09-01T00:00:00.000Z", category: deletedCategory, crop: null, amount: 1000, quantity: null, unitPrice: null, kgPerUnit: null, unit: "", description: "", note: "" };
+  const wrapper = await mountForm({ expense });
+  expect(pressed(wrapper, "expenseCategory").text()).toBe("Xăng dầu");
+});
+
+test("thêm từ vụ đã kết thúc: đổi sang Chung rồi vẫn chọn lại được vụ đó", async () => {
+  vi.mocked(CropAPI.getCrops).mockResolvedValue({ data: [openCrop, closedCrop] });
+  const wrapper = await mountForm({ defaultCropId: "c0" });
+  await pick(wrapper, "expenseCrop", "Chung");
+  expect(wrapper.findAll("#expenseCrop .choice-grid__text").map((n) => n.text())).toContain("Ao 2");
 });

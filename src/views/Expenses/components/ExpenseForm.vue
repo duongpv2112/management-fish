@@ -6,7 +6,7 @@
       <div class="expense-form__label">Nhóm chi</div>
       <ChoiceGrid
         idPrefix="expenseCategory"
-        :items="categories"
+        :items="categoryChoices"
         :modelValue="categoryId"
         textField="categoryName"
         :maxVisible="8"
@@ -182,7 +182,8 @@ const COMMON = "__common";
 const MAX_VISIBLE_SUGGESTIONS = 5;
 
 const categories = ref([]);
-const openCrops = ref([]);
+// Tất cả vụ (kể cả đã kết thúc): lưới chỉ hiện vụ đang nuôi + vụ được chọn sẵn / của khoản đang sửa
+const allCrops = ref([]);
 const suggestions = ref([]);
 const isLoading = ref(false);
 const isSaving = ref(false);
@@ -201,11 +202,20 @@ const note = ref("");
 
 const isEdit = computed(() => Boolean(props.expense));
 
-const selectedCategory = computed(() => categories.value.find((category) => category._id === categoryId.value));
+const selectedCategory = computed(() => categoryChoices.value.find((category) => category._id === categoryId.value));
 
-// Vụ đang nuôi + vụ của khoản đang sửa (có thể đã kết thúc) + "Chung"
+// Nhóm chi (còn dùng) + nhóm của khoản đang sửa nếu nhóm đó đã bị xóa, để nhóm đang chọn luôn hiện
+const categoryChoices = computed(() => {
+  const editingCategory = props.expense?.category;
+  if (!editingCategory || categories.value.some((category) => category._id === editingCategory._id)) {
+    return categories.value;
+  }
+  return [...categories.value, editingCategory];
+});
+
+// Vụ đang nuôi + vụ đang được chọn (có thể đã kết thúc: thêm từ báo cáo vụ cũ, hoặc sửa khoản cũ) + "Chung"
 const cropChoices = computed(() => {
-  const crops = [...openCrops.value];
+  const crops = allCrops.value.filter((crop) => crop.status === "open" || crop._id === props.defaultCropId);
   const editingCrop = props.expense?.crop;
   if (editingCrop && !crops.some((crop) => crop._id === editingCrop._id)) crops.push(editingCrop);
   return [
@@ -214,7 +224,14 @@ const cropChoices = computed(() => {
   ];
 });
 
-const quantity = computed(() => common.parseDecimal(quantityText.value));
+// Số lượng gõ kiểu Việt Nam: "5.000" là năm nghìn (dấu chấm ngăn nghìn), "2,5" hay "1.5" là số lẻ
+const parseQuantity = (text) => {
+  const trimmed = (text ?? "").toString().trim();
+  if (/^\d{1,3}(\.\d{3})+$/.test(trimmed)) return Number(trimmed.replace(/\./g, ""));
+  return common.parseDecimal(trimmed);
+};
+
+const quantity = computed(() => parseQuantity(quantityText.value));
 const unitPrice = computed(() => parseMoney(unitPriceText.value));
 // Có cả số lượng và đơn giá thì tự tính thành tiền (server cũng tính lại như vậy)
 const autoAmount = computed(() =>
@@ -287,10 +304,10 @@ const loadChoices = async () => {
   try {
     const [categoryResult, cropResult] = await Promise.all([
       ExpenseCategoryAPI.getExpenseCategories(),
-      CropAPI.getCrops({ status: "open" }),
+      CropAPI.getCrops(),
     ]);
     categories.value = categoryResult?.data ?? [];
-    openCrops.value = cropResult?.data ?? [];
+    allCrops.value = cropResult?.data ?? [];
   } catch (error) {
     errorMessage.value = "Không thể tải nhóm chi và vụ nuôi, vui lòng thử lại sau.";
     console.error("Lỗi khi tải nhóm chi / vụ nuôi:", error);
@@ -425,9 +442,15 @@ const deleteExpense = async () => {
     }
   }
 
+  // Nút Lưu luôn thấy được ở đáy sheet dù form dài
   .expense-form__actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
     display: flex;
     gap: 8px;
+    padding: 8px 0 4px;
+    background-color: $color-card-background;
 
     > * {
       flex: 1;
