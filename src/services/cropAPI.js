@@ -24,6 +24,11 @@ const CropAPI = {
     return await put(`/crops/reopenCrops/${id}`);
   },
 
+  // → data: { crop, revenue, expense, profit, metrics } (xem getCropReport ở BE)
+  async getCropReport(id) {
+    return await get(`/crops/getCropReport/${id}`);
+  },
+
   async deleteCrop(id) {
     return await remove(`/crops/deleteCrops/${id}`);
   },
