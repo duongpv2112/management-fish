@@ -1,7 +1,7 @@
 <template>
   <div class="login">
     <form class="login__card" @submit.prevent="submit">
-      <h1>Quản lý cân cá nhà Đặng Ánh</h1>
+      <h1>Quản lý ao cá nhà - Gia đình tôi</h1>
       <div v-if="isExpired" class="notice-message">
         Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.
       </div>
