@@ -1,6 +1,6 @@
 <template>
-  <div class="report">
-    <a class="report__back" href="#/vu-nuoi">← Vụ nuôi</a>
+  <div class="report print-area">
+    <a class="report__back no-print" href="#/vu-nuoi">← Vụ nuôi</a>
 
     <div class="report__error" v-if="errorMessage">{{ errorMessage }}</div>
     <div v-else-if="!report" class="report__loading">Đang tải báo cáo...</div>
@@ -17,7 +17,7 @@
             {{ isOpen ? "đang nuôi" : "đã kết thúc" }}
           </span>
         </div>
-        <div class="report-header__actions">
+        <div class="report-header__actions no-print">
           <CPButton class="btn-add-expense" textButton="＋ Chi phí" height="44px" @click="expenseFormOpen = true" />
           <CPButton
             v-if="isOpen"
@@ -35,8 +35,9 @@
             :disabled="isReopening"
             @click="reopenCrop"
           />
+          <CPButton class="btn-print-report" textButton="In báo cáo" height="44px" @click="printReport" />
         </div>
-        <div class="report__action-error" v-if="actionError">{{ actionError }}</div>
+        <div class="report__action-error no-print" v-if="actionError">{{ actionError }}</div>
       </header>
 
       <div class="report-kpis">
@@ -126,7 +127,7 @@
       @close="expenseFormOpen = false"
       @saved="handleExpenseSaved"
     />
-    <ExpenseUndoBar :expense="undoExpense" @undone="loadReport" @expired="undoExpense = null" />
+    <ExpenseUndoBar class="no-print" :expense="undoExpense" @undone="loadReport" @expired="undoExpense = null" />
   </div>
 </template>
 
@@ -164,6 +165,8 @@ const isOpen = computed(() => report.value?.crop.status === "open");
 const formatPercent = (value) => String(value).replace(".", ",");
 const formatKg = (value) => new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 }).format(value ?? 0);
 const formatQuantities = (list) => list.map((item) => `${formatKg(item.quantity)} ${item.unit}`.trim()).join(" · ");
+
+const printReport = () => window.print();
 
 const loadReport = async () => {
   errorMessage.value = "";

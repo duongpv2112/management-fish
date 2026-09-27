@@ -202,3 +202,33 @@ test("lỗi tải", async () => {
   const wrapper = await mountAt();
   expect(wrapper.find(".report__error").text()).toBe("Không thể tải báo cáo vụ, vui lòng thử lại sau.");
 });
+
+test("in báo cáo: vùng in là .report, nút In gọi window.print, link và nút hành động không in", async () => {
+  const print = vi.spyOn(window, "print").mockImplementation(() => {});
+  const wrapper = await mountAt();
+
+  expect(wrapper.find(".report").classes()).toContain("print-area");
+  expect(wrapper.find(".report__back").classes()).toContain("no-print");
+  expect(wrapper.find(".report-header__actions").classes()).toContain("no-print");
+
+  const printButton = wrapper.find(".btn-print-report");
+  expect(printButton.text()).toContain("In báo cáo");
+  expect(printButton.element.closest(".no-print")).not.toBeNull();
+  await printButton.find("button").trigger("click");
+  expect(print).toHaveBeenCalledTimes(1);
+  print.mockRestore();
+});
+
+test("lỗi hành động không in", async () => {
+  const base = report();
+  vi.mocked(CropAPI.getCropReport).mockResolvedValue({
+    data: report({ crop: { ...base.crop, status: "closed", endDate: "2026-09-27T00:00:00.000Z" } }),
+  });
+  vi.mocked(CropAPI.reopenCrop).mockRejectedValue(new Error("Ao này đang có vụ khác!"));
+  const wrapper = await mountAt();
+  await wrapper.find(".btn-reopen-crop button").trigger("click");
+  await flushPromises();
+  const error = wrapper.find(".report__action-error");
+  expect(error.text()).toBe("Ao này đang có vụ khác!");
+  expect(error.classes()).toContain("no-print");
+});
