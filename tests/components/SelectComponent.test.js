@@ -1,5 +1,7 @@
 import { mount } from "@vue/test-utils";
-import { expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
+import { flushPromises } from "@vue/test-utils";
+import { mockRects } from "../helpers/rects";
 
 import CPSelect from "@/components/SelectComponent.vue";
 
@@ -94,4 +96,55 @@ test("đổi modelValue từ ngoài thì nhãn đổi theo", async () => {
   const wrapper = mountSelect();
   await wrapper.setProps({ modelValue: "USD" });
   expect(wrapper.find("#sel").text()).toContain("USD ($)");
+});
+
+describe("hướng mở danh sách theo chỗ trống", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    window.innerWidth = 1024;
+    window.innerHeight = 768;
+  });
+
+  const openAt = async (rects) => {
+    window.innerWidth = 400;
+    window.innerHeight = 800;
+    mockRects(rects);
+    const wrapper = mountSelect();
+    await wrapper.find("#sel").trigger("click");
+    await flushPromises();
+    return wrapper.find("[role='listbox']");
+  };
+
+  test("đủ chỗ → căn phải, mở xuống như cũ", async () => {
+    const list = await openAt({
+      "cp-select__trigger": { left: 200, top: 100, width: 140, height: 40 },
+      "cp-select__list": { width: 200, height: 150 },
+    });
+    expect(list.classes()).not.toContain("cp-select__list--start");
+    expect(list.classes()).not.toContain("cp-select__list--up");
+  });
+
+  test("ô sát mép trái, danh sách rộng hơn ô → căn trái (mở sang phải)", async () => {
+    const list = await openAt({
+      "cp-select__trigger": { left: 12, top: 100, width: 140, height: 40 },
+      "cp-select__list": { width: 260, height: 150 },
+    });
+    expect(list.classes()).toContain("cp-select__list--start");
+  });
+
+  test("ô sát đáy màn hình → mở lên trên", async () => {
+    const list = await openAt({
+      "cp-select__trigger": { left: 200, top: 700, width: 140, height: 40 },
+      "cp-select__list": { width: 140, height: 150 },
+    });
+    expect(list.classes()).toContain("cp-select__list--up");
+  });
+
+  test("danh sách dài hơn cả hai phía → giới hạn chiều cao, cuộn trong danh sách", async () => {
+    const list = await openAt({
+      "cp-select__trigger": { left: 200, top: 100, width: 140, height: 40 },
+      "cp-select__list": { width: 140, height: 900 },
+    });
+    expect(list.attributes("style")).toContain("max-height: 648px");
+  });
 });

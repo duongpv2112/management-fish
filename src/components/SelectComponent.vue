@@ -2,6 +2,7 @@
   <div class="cp-select" :class="{ 'cp-select--open': isOpen }" v-click-outside="close">
     <button
       :id="idControl"
+      ref="triggerRef"
       type="button"
       class="cp-select__trigger"
       aria-haspopup="listbox"
@@ -14,7 +15,18 @@
       <span class="cp-select__value">{{ selectedLabel }}</span>
       <i class="mdi mdi-chevron-down cp-select__chevron" aria-hidden="true"></i>
     </button>
-    <ul v-if="isOpen" :id="listId" class="cp-select__list" role="listbox">
+    <ul
+      v-if="isOpen"
+      :id="listId"
+      ref="listRef"
+      class="cp-select__list"
+      :class="{
+        'cp-select__list--start': placement.horizontal === 'start',
+        'cp-select__list--up': placement.vertical === 'up',
+      }"
+      :style="placementStyle"
+      role="listbox"
+    >
       <li
         v-for="(option, index) in options"
         :key="option.value"
@@ -40,6 +52,8 @@
 import { computed, ref } from "vue";
 import "@mdi/font/css/materialdesignicons.css";
 
+import { useDropdownPlacement } from "@/composables/useDropdownPlacement";
+
 // Ô chọn tự vẽ thay <select> mặc định: bấm mở danh sách, chọn bằng chuột hoặc bàn phím
 const props = defineProps({
   modelValue: {
@@ -64,6 +78,10 @@ const props = defineProps({
 const emit = defineEmits(["update:modelValue", "change"]);
 
 const isOpen = ref(false);
+const triggerRef = ref(null);
+const listRef = ref(null);
+// Thiếu chỗ bên trái thì mở sang phải (và ngược lại), thiếu chỗ bên dưới thì mở lên trên
+const { placement, placementStyle } = useDropdownPlacement(triggerRef, listRef, isOpen);
 const activeIndex = ref(-1);
 
 const listId = computed(() => `${props.idControl || "cp-select"}-list`);
@@ -194,6 +212,18 @@ const handleKeydown = (event) => {
     border: 1px solid $color-border-strong;
     border-radius: $radius-md;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+    // Bên trái không đủ chỗ: căn mép trái với ô, danh sách mở sang phải
+    &.cp-select__list--start {
+      right: auto;
+      left: 0;
+    }
+
+    // Bên dưới không đủ chỗ: mở lên trên
+    &.cp-select__list--up {
+      top: auto;
+      bottom: calc(100% + 4px);
+    }
   }
 
   .cp-select__option {
@@ -208,6 +238,13 @@ const handleKeydown = (event) => {
     white-space: nowrap;
     color: $color-text-primary;
     cursor: pointer;
+
+    // Danh sách bị giới hạn chiều rộng (hai bên đều thiếu chỗ) → chữ dài hiện "…"
+    span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
     &.cp-select__option--active {
       background-color: $color-background;

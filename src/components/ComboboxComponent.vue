@@ -14,7 +14,7 @@
       class="cp-combobox__control"
       :class="{ rounded: rounded, 'cp-combobox--focus': isFocusOn, 'cp-combobox--disabled': disabled, 'cp-combobox--error': errorMessage }"
     >
-      <div class="cp-combobox__input">
+      <div ref="anchorRef" class="cp-combobox__input">
         <input
           :id="idControl"
           class="combobox-input"
@@ -37,7 +37,13 @@
         </div>
       </div>
       <Transition name="fade-down" mode="out-in">
-        <div class="cp-combobox__select" v-if="isShowLstData">
+        <div
+          v-if="isShowLstData"
+          ref="listRef"
+          class="cp-combobox__select"
+          :class="{ 'cp-combobox__select--up': placement.vertical === 'up' }"
+          :style="listStyle"
+        >
           <div class="select-content" v-if="!isCustomCombobox">
             <template v-if="lstDataCombobox && lstDataCombobox.length > 0">
               <div
@@ -66,7 +72,9 @@
   </div>
 </template>
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { computed, ref, onMounted, watch } from "vue";
+
+import { useDropdownPlacement } from "@/composables/useDropdownPlacement";
 
 const props = defineProps({
   idControl: {
@@ -134,6 +142,13 @@ const props = defineProps({
 const emit = defineEmits(['update']);
 const timeoutChangeInput = ref(null);
 const isShowLstData = ref(false);
+const anchorRef = ref(null);
+const listRef = ref(null);
+// Danh sách rộng bằng ô nên chỉ cần chọn lên/xuống: thiếu chỗ bên dưới thì mở lên trên
+const { placement } = useDropdownPlacement(anchorRef, listRef, isShowLstData);
+const listStyle = computed(() =>
+  placement.value.maxHeight !== null ? { maxHeight: `${placement.value.maxHeight}px`, overflowY: "auto" } : {}
+);
 const itemFocusCurrent = ref({});
 const itemSelectedCurrent = ref({});
 const indexFocusCurrent = ref(null);
@@ -464,6 +479,12 @@ const keyPressCode = ref({
       left: 0;
       right: 0;
       animation: fadeIn ease-out 0.3s;
+
+      // Bên dưới không đủ chỗ: mở lên trên
+      &.cp-combobox__select--up {
+        top: auto;
+        bottom: calc(100% + 3px);
+      }
 
       .select-content {
         display: flex;
