@@ -1,0 +1,137 @@
+// Kiểu bảng dùng chung cho mọi bảng trên màn hình (bảng cân, bảng tiền, danh mục, nhật ký).
+// Cách dùng:
+//   <div class="cp-table-wrap">
+//     <table class="cp-table">…</table>
+//   </div>
+// - .cp-table-wrap: khung viền mảnh bo góc; bảng rộng hơn màn hình thì cuộn ngang bên trong khung
+// - td/th.number: cột số căn phải, chữ số thẳng hàng
+// - td.cp-table__empty: dòng "Chưa có dữ liệu…"
+// - .cp-table--columns: thêm đường kẻ dọc rất mờ giữa các cột (bảng nhiều cột số liền nhau)
+// Phiếu in (SummaryPrintTable) có kiểu kẻ ô đen trắng riêng, không dùng file này.
+
+.cp-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+  background-color: $color-card-background;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cp-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: $color-text-primary;
+
+  th,
+  td {
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: middle;
+    border-bottom: 1px solid $color-border;
+  }
+
+  thead th {
+    background-color: $color-hover;
+    color: $color-primary;
+    font-weight: 700;
+    font-size: 13px;
+    border-bottom: 1px solid darken($color-hover, 8%);
+  }
+
+  tbody tr:nth-child(even) td {
+    background-color: #fafcfa;
+  }
+
+  tbody tr:hover td {
+    background-color: lighten($color-hover, 2%);
+  }
+
+  // Dòng cuối không cần đường kẻ vì khung đã có viền
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  tfoot td {
+    font-weight: 700;
+    background-color: $color-background;
+    border-top: 2px solid $color-border-strong;
+    border-bottom: none;
+  }
+
+  .number {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  // Số không bị bẻ dòng; tiêu đề cột thì được xuống dòng để bảng khỏi phải cuộn ngang
+  td.number {
+    white-space: nowrap;
+  }
+
+  .cp-table__empty {
+    text-align: center;
+    color: $color-text-primary;
+    opacity: 0.6;
+    font-style: italic;
+    padding: 20px 12px;
+  }
+
+  // Bảng hẹp các cột bấm được như nút (Sửa/Xóa) không bị xuống dòng
+  .cp-table__actions {
+    width: 1%;
+    white-space: nowrap;
+    text-align: right;
+  }
+
+  // Bảng nằm trong thẻ hẹp (vd. bảng tiền cạnh bảng cân): ô gọn hơn
+  &.cp-table--compact {
+    th,
+    td {
+      padding: 8px 10px;
+    }
+
+    // Cột đầu (tên cá, "Tổng cộng") không bị bẻ dòng
+    td:first-child {
+      white-space: nowrap;
+    }
+  }
+
+  &.cp-table--columns {
+    th + th,
+    td + td {
+      border-left: 1px solid rgba($color-border, 0.6);
+    }
+  }
+}
+
+// Điện thoại: ô gọn hơn một chút để vừa màn hình
+@media (max-width: 899.98px) {
+  .cp-table {
+    th,
+    td {
+      padding: 10px;
+    }
+  }
+}
+
+// Khi in (bảng tiền nằm trong vùng in): bỏ màu nền, kẻ đen cho rõ trên giấy
+@media print {
+  .cp-table-wrap {
+    border: none;
+    border-radius: 0;
+    overflow: visible;
+  }
+
+  .cp-table {
+    th,
+    td {
+      border: 1px solid #000 !important;
+      background-color: transparent !important;
+      color: #000 !important;
+    }
+  }
+}

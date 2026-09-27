@@ -37,32 +37,34 @@
         </li>
       </ul>
 
-      <table v-else class="log-table">
-        <thead>
-          <tr>
-            <th class="log-table__time">Thời gian</th>
-            <th class="log-table__fish">Loại cá</th>
-            <th>Nội dung</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="logs.length === 0">
-            <td colspan="3" class="log-table__empty">
-              {{ isLoading ? "Đang tải dữ liệu..." : "Chưa có nhật ký." }}
-            </td>
-          </tr>
-          <tr
-            v-for="log in logs"
-            :key="log._id"
-            class="log-row"
-            :class="{ 'log-row--error': log.stepName?.includes('không thành công') }"
-          >
-            <td>{{ formatDateTime(log.createdAt) }}</td>
-            <td>{{ log.fishTypeName }}</td>
-            <td>{{ log.stepName }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <div v-else class="cp-table-wrap">
+        <table class="log-table cp-table">
+          <thead>
+            <tr>
+              <th class="log-table__time">Thời gian</th>
+              <th class="log-table__fish">Loại cá</th>
+              <th>Nội dung</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="logs.length === 0">
+              <td colspan="3" class="log-table__empty cp-table__empty">
+                {{ isLoading ? "Đang tải dữ liệu..." : "Chưa có nhật ký." }}
+              </td>
+            </tr>
+            <tr
+              v-for="log in logs"
+              :key="log._id"
+              class="log-row"
+              :class="{ 'log-row--error': log.stepName?.includes('không thành công') }"
+            >
+              <td>{{ formatDateTime(log.createdAt) }}</td>
+              <td>{{ log.fishTypeName }}</td>
+              <td>{{ log.stepName }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <div class="pagination">
         <button class="page-btn" :disabled="page <= 1 || isLoading" @click="goToPage(page - 1)">
@@ -195,37 +197,14 @@ onMounted(async () => {
     background-color: lighten($color-error, 40%);
   }
 
+  // Kiểu bảng dùng chung ở assets/scss/_table.scss; ở đây chỉ độ rộng cột và dòng lỗi
   .log-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-
-    th,
-    td {
-      border: 1px solid $color-border;
-      padding: 8px 12px;
-      text-align: left;
-    }
-
-    th {
-      background-color: $color-secondary;
-      color: $color-card-background;
-      font-weight: 600;
-    }
-
-    .log-table__time {
-      width: 150px;
-    }
-
+    .log-table__time,
     .log-table__fish {
-      width: 150px;
+      width: 160px;
     }
 
-    .log-table__empty {
-      text-align: center;
-    }
-
-    .log-row--error {
+    .log-row--error td {
       color: $color-error;
     }
   }

@@ -38,59 +38,61 @@
       />
     </div>
 
-    <table class="catalog-table">
-      <thead>
-        <tr>
-          <th v-for="field in fields" :key="field.key">{{ field.label }}</th>
-          <th class="catalog-table__actions"></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-if="items.length === 0">
-          <td :colspan="fields.length + 1" class="catalog-table__empty">
-            {{ isLoading ? "Đang tải dữ liệu..." : "Chưa có dữ liệu." }}
-          </td>
-        </tr>
-        <tr v-for="item in items" :key="item._id" class="catalog-row">
-          <template v-if="editingId === item._id">
-            <td v-for="field in fields" :key="field.key">
-              <CPSelect
-                v-if="field.type === 'select'"
-                :idControl="`${idPrefix}-edit-${field.key}`"
-                v-model="editingItem[field.key]"
-                :options="field.options"
-              />
-              <CPInput
-                v-else
-                :idControl="`${idPrefix}-edit-${field.key}`"
-                :modelValue="editingItem[field.key]"
-                :typeInput="field.type === 'number' ? 1 : 2"
-                height="32px"
-                @update="($event) => (editingItem[field.key] = $event)"
-                @enter="saveEdit"
-              />
+    <div class="cp-table-wrap">
+      <table class="catalog-table cp-table">
+        <thead>
+          <tr>
+            <th v-for="field in fields" :key="field.key" :class="{ number: field.type === 'number' }">{{ field.label }}</th>
+            <th class="catalog-table__actions cp-table__actions"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="items.length === 0">
+            <td :colspan="fields.length + 1" class="catalog-table__empty cp-table__empty">
+              {{ isLoading ? "Đang tải dữ liệu..." : "Chưa có dữ liệu." }}
             </td>
-            <td class="catalog-table__actions">
-              <CPButton class="btn-save" typeButton="primary" textButton="Lưu" :disabled="isSaving" @click="saveEdit" />
-              <CPButton class="btn-cancel" textButton="Hủy" @click="cancelEdit" />
-            </td>
-          </template>
-          <template v-else>
-            <td
-              v-for="field in fields"
-              :key="field.key"
-              :class="`catalog-row__${field.type === 'number' ? 'number' : 'name'}`"
-            >
-              {{ displayValue(field, item[field.key]) }}
-            </td>
-            <td class="catalog-table__actions">
-              <CPButton class="btn-edit" textButton="Sửa" @click="startEdit(item)" />
-              <CPButton class="btn-delete" typeButton="danger" textButton="Xóa" @click="deleteItem(item)" />
-            </td>
-          </template>
-        </tr>
-      </tbody>
-    </table>
+          </tr>
+          <tr v-for="item in items" :key="item._id" class="catalog-row">
+            <template v-if="editingId === item._id">
+              <td v-for="field in fields" :key="field.key">
+                <CPSelect
+                  v-if="field.type === 'select'"
+                  :idControl="`${idPrefix}-edit-${field.key}`"
+                  v-model="editingItem[field.key]"
+                  :options="field.options"
+                />
+                <CPInput
+                  v-else
+                  :idControl="`${idPrefix}-edit-${field.key}`"
+                  :modelValue="editingItem[field.key]"
+                  :typeInput="field.type === 'number' ? 1 : 2"
+                  height="32px"
+                  @update="($event) => (editingItem[field.key] = $event)"
+                  @enter="saveEdit"
+                />
+              </td>
+              <td class="catalog-table__actions cp-table__actions">
+                <CPButton class="btn-save" typeButton="primary" textButton="Lưu" :disabled="isSaving" @click="saveEdit" />
+                <CPButton class="btn-cancel" textButton="Hủy" @click="cancelEdit" />
+              </td>
+            </template>
+            <template v-else>
+              <td
+                v-for="field in fields"
+                :key="field.key"
+                :class="field.type === 'number' ? 'catalog-row__number number' : 'catalog-row__name'"
+              >
+                {{ displayValue(field, item[field.key]) }}
+              </td>
+              <td class="catalog-table__actions cp-table__actions">
+                <CPButton class="btn-edit" textButton="Sửa" @click="startEdit(item)" />
+                <CPButton class="btn-delete" typeButton="danger" textButton="Xóa" @click="deleteItem(item)" />
+              </td>
+            </template>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
@@ -319,40 +321,12 @@ onMounted(loadItems);
     }
   }
 
-  .catalog-table {
-    width: 100%;
-    border-collapse: collapse;
+  // Kiểu bảng dùng chung ở assets/scss/_table.scss; ở đây chỉ chỉnh khoảng cách nút Sửa/Xóa
+  .catalog-table .catalog-table__actions :deep(.cp-button) {
+    display: inline-block;
 
-    th,
-    td {
-      border: 1px solid $color-border;
-      padding: 8px 12px;
-      text-align: left;
-    }
-
-    th {
-      background-color: $color-secondary;
-      color: $color-card-background;
-      font-weight: 600;
-    }
-
-    tr:hover {
-      background-color: $color-hover;
-    }
-
-    .catalog-table__actions {
-      width: 1%;
-      white-space: nowrap;
-
-      :deep(.cp-button) {
-        display: inline-block;
-        margin-right: 8px;
-      }
-    }
-
-    .catalog-table__empty {
-      text-align: center;
-      color: $color-text-primary;
+    & + .cp-button {
+      margin-left: 8px;
     }
   }
 }

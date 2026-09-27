@@ -26,30 +26,33 @@
         </div>
       </div>
     </div>
-    <table class="customers" v-else>
-      <thead>
-        <tr>
-          <th v-for="(fishType, fishTypeIndex) in filteredData">
-            {{ fishType.fishName }}
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-if="numberRowsOfTable === 0">
-          <td :colspan="Math.max(1, filteredData.length)" class="empty-row">Chưa có dữ liệu cân cá.</td>
-        </tr>
-        <tr v-for="row in paginatedRows">
-          <td
-            v-for="(fishType, fishTypeIndex) in filteredData"
-            :class="{ 'cell-editable': !readOnly && fishType.items[row - 1]?._id }"
-            :title="cellTitle(fishType.items[row - 1])"
-            @click="handleClickCell(fishType, row)"
-          >
-            {{ fishType.items[row - 1]?.netWeight ?? fishType.items[row - 1]?.fishWeight }}
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div v-else class="cp-table-wrap">
+      <table class="customers cp-table cp-table--columns">
+        <thead>
+          <tr>
+            <th v-for="(fishType, fishTypeIndex) in filteredData" class="number">
+              {{ fishType.fishName }}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="numberRowsOfTable === 0">
+            <td :colspan="Math.max(1, filteredData.length)" class="empty-row cp-table__empty">Chưa có dữ liệu cân cá.</td>
+          </tr>
+          <tr v-for="row in paginatedRows">
+            <td
+              v-for="(fishType, fishTypeIndex) in filteredData"
+              class="number"
+              :class="{ 'cell-editable': !readOnly && fishType.items[row - 1]?._id }"
+              :title="cellTitle(fishType.items[row - 1])"
+              @click="handleClickCell(fishType, row)"
+            >
+              {{ fishType.items[row - 1]?.netWeight ?? fishType.items[row - 1]?.fishWeight }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
     <div class="pagination" v-if="isShowTable">
       <button
         @click="currentPage -= 1"
@@ -253,35 +256,10 @@ const paginatedRows = computed(() => {
     }
   }
 
+  // Kiểu bảng dùng chung ở assets/scss/_table.scss; ở đây chỉ ô số cân bấm được để sửa
   .customers {
-    font-family: Arial, Helvetica, sans-serif;
-    border-collapse: collapse;
-    width: 100%;
-    height: fit-content;
-    border-radius: $radius-lg;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-
-    & td,
-    & th {
-      border: 1px solid $color-border;
-      padding: 12px;
-    }
-
-    & tr {
-      min-height: 55px;
-    }
-
-    & tr:nth-child(even) {
-      background-color: lighten($color-background, 2%);
-    }
-
-    & tr:hover {
-      background-color: $color-hover;
-    }
-
     // Gạch chân chấm để nhận ra ô bấm được cả trên điện thoại (không có hover)
-    & td.cell-editable {
+    td.cell-editable {
       cursor: pointer;
       color: $color-primary;
       text-decoration: underline dotted;
@@ -290,19 +268,6 @@ const paginatedRows = computed(() => {
       &:hover {
         background-color: darken($color-hover, 5%);
       }
-    }
-
-    & td.empty-row {
-      text-align: center;
-    }
-
-    & th {
-      padding-top: 12px;
-      padding-bottom: 12px;
-      text-align: left;
-      background-color: $color-secondary;
-      color: $color-card-background;
-      font-weight: 600;
     }
   }
 
