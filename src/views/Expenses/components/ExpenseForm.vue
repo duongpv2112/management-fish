@@ -31,7 +31,7 @@
       />
 
       <label class="expense-form__label" for="expense-date">Ngày</label>
-      <input id="expense-date" class="expense-form__date" type="date" v-model="date" />
+      <CPDate idControl="expense-date" v-model="date" />
 
       <div class="expense-form__description">
         <CPInput
@@ -150,6 +150,7 @@ import BottomSheet from "@/components/BottomSheet.vue";
 import ChoiceGrid from "@/components/ChoiceGrid.vue";
 import CPInput from "@/components/InputComponent.vue";
 import CPButton from "@/components/ButtonComponent.vue";
+import CPDate from "@/components/DateInputComponent.vue";
 import ExpenseCategoryAPI from "@/services/expenseCategoryAPI";
 import CropAPI from "@/services/cropAPI";
 import ExpenseAPI from "@/services/expenseAPI";
@@ -387,21 +388,6 @@ const deleteExpense = async () => {
   .expense-form__label {
     font-weight: 600;
     margin-bottom: -4px;
-  }
-
-  .expense-form__date {
-    min-height: 44px;
-    padding: 0 12px;
-    border: 1px solid $color-border-strong;
-    border-radius: $radius-md;
-    font-size: 16px;
-    background-color: $color-card-background;
-    color: $color-text-primary;
-
-    &:focus {
-      outline: none;
-      box-shadow: 0 0 0 3px $color-focus-ring;
-    }
   }
 
   .expense-form__suggestions {

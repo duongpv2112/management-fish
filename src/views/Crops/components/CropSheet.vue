@@ -16,7 +16,7 @@
       />
 
       <label class="crop-sheet__label" for="crop-date">{{ mode === "start" ? "Ngày thả" : "Ngày kết thúc" }}</label>
-      <input id="crop-date" class="crop-sheet__date" type="date" v-model="dateValue" />
+      <CPDate idControl="crop-date" v-model="dateValue" />
 
       <p v-if="mode === 'close'" class="crop-sheet__hint">Sau khi kết thúc, phiên bán mới không gắn được vào vụ này.</p>
 
@@ -38,6 +38,7 @@ import { computed, ref, watch } from "vue";
 import BottomSheet from "@/components/BottomSheet.vue";
 import CPInput from "@/components/InputComponent.vue";
 import CPButton from "@/components/ButtonComponent.vue";
+import CPDate from "@/components/DateInputComponent.vue";
 import CropAPI from "@/services/cropAPI";
 import { todayInputValue } from "@/common/dateInput";
 
@@ -127,21 +128,6 @@ const submit = async () => {
     font-size: 14px;
     font-weight: 500;
     margin-bottom: -6px;
-  }
-
-  .crop-sheet__date {
-    min-height: 44px;
-    padding: 0 12px;
-    border: 1px solid $color-border-strong;
-    border-radius: $radius-md;
-    font-size: 16px;
-    background-color: $color-card-background;
-    color: $color-text-primary;
-
-    &:focus {
-      outline: none;
-      box-shadow: 0 0 0 3px $color-focus-ring;
-    }
   }
 
   .crop-sheet__hint {

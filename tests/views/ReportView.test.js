@@ -187,18 +187,18 @@ test("Tùy chọn: kiểm tra khoảng ngày trước khi gọi API", async () =
   expect(wrapper.find("#reportFrom").exists()).toBe(true);
   expect(wrapper.find("#reportTo").exists()).toBe(true);
 
-  await wrapper.find("#reportFrom").setValue("2026-06-01");
+  await wrapper.find("#reportFrom").setValue("01/06/2026");
   await wrapper.find("#reportTo").setValue("");
   await wrapper.find(".btn-apply-range button").trigger("click");
   expect(wrapper.find(".report__range-error").text()).toBe("Vui lòng chọn đủ từ ngày và đến ngày.");
   expect(ReportAPI.getOverview).toHaveBeenCalledTimes(1);
 
-  await wrapper.find("#reportTo").setValue("2026-05-01");
+  await wrapper.find("#reportTo").setValue("01/05/2026");
   await wrapper.find(".btn-apply-range button").trigger("click");
   expect(wrapper.find(".report__range-error").text()).toBe("Ngày kết thúc không được trước ngày bắt đầu!");
   expect(ReportAPI.getOverview).toHaveBeenCalledTimes(1);
 
-  await wrapper.find("#reportTo").setValue("2026-09-30");
+  await wrapper.find("#reportTo").setValue("30/09/2026");
   await wrapper.find(".btn-apply-range button").trigger("click");
   await flushPromises();
   expect(wrapper.find(".report__range-error").exists()).toBe(false);

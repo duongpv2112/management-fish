@@ -13,11 +13,11 @@
       <template v-if="period === CUSTOM">
         <div class="overview__filter">
           <label class="overview__filter-label" for="reportFrom">Từ ngày</label>
-          <input id="reportFrom" class="overview__date" type="date" v-model="customFrom" />
+          <CPDate idControl="reportFrom" v-model="customFrom" />
         </div>
         <div class="overview__filter">
           <label class="overview__filter-label" for="reportTo">Đến ngày</label>
-          <input id="reportTo" class="overview__date" type="date" v-model="customTo" />
+          <CPDate idControl="reportTo" v-model="customTo" />
         </div>
         <div class="overview__filter overview__filter--button">
           <CPButton class="btn-apply-range" typeButton="primary" textButton="Xem" height="44px" @click="applyRange" />
@@ -132,6 +132,7 @@ import { useRouter } from "vue-router";
 
 import CPButton from "@/components/ButtonComponent.vue";
 import CPSelect from "@/components/SelectComponent.vue";
+import CPDate from "@/components/DateInputComponent.vue";
 import ProfitChart from "./components/ProfitChart.vue";
 import ReportAPI from "@/services/reportAPI";
 import { formatMoney } from "@/common/currency";
@@ -288,23 +289,6 @@ onMounted(loadOverview);
   display: block;
   margin-bottom: 8px;
   font-weight: 600;
-}
-
-.overview__date {
-  width: 100%;
-  height: 44px;
-  padding: 0 12px;
-  border: 1px solid $color-border-strong;
-  border-radius: $radius-md;
-  font: inherit;
-  color: $color-text-primary;
-  background-color: $color-card-background;
-
-  &:focus {
-    outline: none;
-    border-color: $color-primary;
-    box-shadow: 0 0 0 3px $color-focus-ring;
-  }
 }
 
 .report__range-error,

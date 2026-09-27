@@ -170,7 +170,7 @@ test("sửa khoản chi của vụ đã kết thúc: vẫn chọn đúng vụ đ
   expect(wrapper.findAll("#expenseCrop .choice-grid__text").map((n) => n.text())).toEqual(["Ao 1", "Ao 2", "Chung"]);
   expect(pressed(wrapper, "expenseCrop").text()).toBe("Ao 2");
   expect(pressed(wrapper, "expenseCategory").text()).toBe("Cám");
-  expect(wrapper.find("#expense-date").element.value).toBe("2026-06-15");
+  expect(wrapper.find("#expense-date").element.value).toBe("15/06/2026");
 
   await saveButton(wrapper).trigger("click");
   await flushPromises();
