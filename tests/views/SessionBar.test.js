@@ -65,21 +65,25 @@ describe("SessionBar", () => {
     expect(wrapper.emitted().select).toEqual([["s1"]]);
   });
 
-  test("Phiên mới: hỏi tên người mua rồi tạo phiên", async () => {
-    vi.spyOn(window, "prompt").mockReturnValue("  Chị Lan ");
-    vi.mocked(WeighSessionAPI.createWeighSession).mockResolvedValue({ success: true, data: { _id: "s3" } });
+  test("Phiên mới → emit requestNew, không tự tạo phiên", async () => {
     const wrapper = mountBar();
     await wrapper.find(".btn-new-session button").trigger("click");
-    await flushPromises();
-    expect(WeighSessionAPI.createWeighSession).toHaveBeenCalledWith({ buyerName: "Chị Lan" });
-    expect(wrapper.emitted().created[0][0]).toEqual({ _id: "s3" });
+    expect(wrapper.emitted().requestNew).toHaveLength(1);
+    expect(WeighSessionAPI.createWeighSession).not.toHaveBeenCalled();
   });
 
-  test("Phiên mới: bấm Hủy ở hộp hỏi tên → không tạo", async () => {
-    vi.spyOn(window, "prompt").mockReturnValue(null);
-    const wrapper = mountBar();
-    await wrapper.find(".btn-new-session button").trigger("click");
-    expect(WeighSessionAPI.createWeighSession).not.toHaveBeenCalled();
+  test("phiên chưa có ao → nút Chọn ao; có ao → Đổi ao và nhãn có tên ao; bấm → emit requestCrop", async () => {
+    let wrapper = mountBar();
+    expect(wrapper.find(".btn-session-crop").text()).toBe("Chọn ao");
+    await wrapper.find(".btn-session-crop button").trigger("click");
+    expect(wrapper.emitted().requestCrop).toHaveLength(1);
+
+    const withPond = { ...openSession, crop: { _id: "c1", cropName: "Ao 1 · Vụ 09/2026", pond: { _id: "p1", pondName: "Ao 1" } } };
+    wrapper = mount(SessionBar, { props: { sessions: [withPond, closedSession], selectedId: "s2" } });
+    expect(wrapper.find(".btn-session-crop").text()).toBe("Đổi ao");
+    expect(wrapper.findComponent(CPCombobox).props("lstData")[0].label).toBe(
+      "Phiên 26/09/2026 · Ao 1 — Anh Tuấn (đang mở)"
+    );
   });
 
   test("Kết thúc phiên: xác nhận → gọi closeWeighSession và emit closed", async () => {

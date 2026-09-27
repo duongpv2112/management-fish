@@ -18,7 +18,15 @@
         textButton="Phiên mới"
         height="40px"
         :disabled="isSaving"
-        @click="createSession"
+        @click="emit('requestNew')"
+      />
+      <CPButton
+        v-if="selectedSession"
+        class="btn-session-crop"
+        :textButton="sessionPondName(selectedSession) ? 'Đổi ao' : 'Chọn ao'"
+        height="40px"
+        :disabled="isSaving"
+        @click="emit('requestCrop')"
       />
       <CPButton
         v-if="selectedSession?.status === 'open'"
@@ -40,6 +48,7 @@ import { computed, ref } from "vue";
 import CPCombobox from "@/components/ComboboxComponent.vue";
 import CPButton from "@/components/ButtonComponent.vue";
 import WeighSessionAPI from "@/services/weighSessionAPI";
+import { sessionPondName } from "@/common/sessionLabel";
 
 const props = defineProps({
   // Danh sách phiên, mới nhất trước
@@ -53,17 +62,19 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["select", "created", "closed"]);
+// requestNew / requestCrop: trang cha mở sheet chọn ao (tạo phiên mới / gán ao cho phiên đang chọn)
+const emit = defineEmits(["select", "closed", "requestNew", "requestCrop"]);
 
 const isSaving = ref(false);
 const errorMessage = ref("");
 
-// "Phiên 26/09/2026 — Anh Tuấn (đang mở)"
+// "Phiên 26/09/2026 · Ao 1 — Anh Tuấn (đang mở)"
 const sessionOptions = computed(() =>
   props.sessions.map((session) => ({
     _id: session._id,
     label:
       session.sessionName +
+      (sessionPondName(session) ? ` · ${sessionPondName(session)}` : "") +
       (session.buyerName ? ` — ${session.buyerName}` : "") +
       (session.status === "open" ? " (đang mở)" : ""),
   }))
@@ -73,21 +84,6 @@ const selectedSession = computed(() =>
   props.sessions.find((session) => session._id === props.selectedId)
 );
 
-const createSession = async () => {
-  errorMessage.value = "";
-  const buyerName = window.prompt("Tên người mua (có thể để trống):", "");
-  if (buyerName === null) return;
-
-  isSaving.value = true;
-  try {
-    const result = await WeighSessionAPI.createWeighSession({ buyerName: buyerName.trim() });
-    emit("created", result?.data);
-  } catch (error) {
-    errorMessage.value = error?.message || "Tạo phiên cân không thành công!";
-  } finally {
-    isSaving.value = false;
-  }
-};
 
 const closeSession = async () => {
   errorMessage.value = "";

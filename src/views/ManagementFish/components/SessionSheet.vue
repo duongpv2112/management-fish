@@ -17,6 +17,7 @@
           <span class="session-sheet__name">{{ session.sessionName }}</span>
           <span class="session-sheet__date">
             {{ common.formatDateWithType(session.createdAt, "DD/MM/YYYY") }}
+            <template v-if="sessionPondName(session)"> · {{ sessionPondName(session) }}</template>
             <template v-if="session.buyerName"> · {{ session.buyerName }}</template>
           </span>
         </span>
@@ -30,7 +31,16 @@
       </button>
 
       <div class="session-sheet__actions">
-        <button type="button" class="btn-sheet-new" :disabled="isSaving" @click="createSession">Phiên mới</button>
+        <button type="button" class="btn-sheet-new" :disabled="isSaving" @click="request('requestNew')">Phiên mới</button>
+        <button
+          v-if="selectedSession"
+          type="button"
+          class="btn-sheet-crop"
+          :disabled="isSaving"
+          @click="request('requestCrop')"
+        >
+          {{ sessionPondName(selectedSession) ? "Đổi ao" : "Chọn ao" }}
+        </button>
         <button
           v-if="selectedSession?.status === 'open'"
           type="button"
@@ -51,6 +61,7 @@ import { computed, ref } from "vue";
 import BottomSheet from "@/components/BottomSheet.vue";
 import WeighSessionAPI from "@/services/weighSessionAPI";
 import { common } from "@/common/common";
+import { sessionPondName } from "@/common/sessionLabel";
 
 // Chọn / tạo / kết thúc phiên trên điện thoại (thay cho SessionBar)
 const props = defineProps({
@@ -69,7 +80,8 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["close", "select", "created", "closed"]);
+// requestNew / requestCrop: trang cha mở sheet chọn ao (tạo phiên mới / gán ao cho phiên đang chọn)
+const emit = defineEmits(["close", "select", "closed", "requestNew", "requestCrop"]);
 
 const isSaving = ref(false);
 const errorMessage = ref("");
@@ -81,21 +93,10 @@ const selectSession = (sessionId) => {
   emit("close");
 };
 
-const createSession = async () => {
-  errorMessage.value = "";
-  const buyerName = window.prompt("Tên người mua (có thể để trống):", "");
-  if (buyerName === null) return;
-
-  isSaving.value = true;
-  try {
-    const result = await WeighSessionAPI.createWeighSession({ buyerName: buyerName.trim() });
-    emit("created", result?.data);
-    emit("close");
-  } catch (error) {
-    errorMessage.value = error?.message || "Tạo phiên cân không thành công!";
-  } finally {
-    isSaving.value = false;
-  }
+// Đóng sheet này rồi để trang cha mở sheet tương ứng
+const request = (eventName) => {
+  emit(eventName);
+  emit("close");
 };
 
 // Kết thúc phiên không hoàn tác được nên nói rõ hậu quả
@@ -195,6 +196,7 @@ const closeSession = async () => {
 
   .session-sheet__actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     margin-top: 12px;
 
@@ -210,6 +212,12 @@ const closeSession = async () => {
         opacity: 0.5;
         cursor: not-allowed;
       }
+    }
+
+    .btn-sheet-crop {
+      border: 1px solid $color-primary;
+      background-color: $color-card-background;
+      color: $color-primary;
     }
 
     .btn-sheet-new {
